@@ -1,0 +1,83 @@
+.agent-panel {
+  flex: 1; background: #f0f4f8; overflow-y: auto; padding: 24px;
+}
+.agent-panel::-webkit-scrollbar { width: 4px; }
+.agent-panel::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 2px; }
+
+.agent-panel-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;
+}
+.aph-left { display: flex; align-items: center; gap: 10px; }
+.aph-left h2 { font-size: 18px; font-weight: 800; color: #1a202c; margin: 0; }
+.agent-count-badge {
+  background: #e6f9ee; border: 1px solid #b7ebce; color: #0e9f50;
+  font-size: 12px; font-weight: 700; padding: 4px 14px; border-radius: 20px;
+}
+
+.agents-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 16px;
+}
+
+.agent-card {
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 18px;
+  transition: all 0.2s ease; animation: cardIn 0.3s ease;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+@keyframes cardIn { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform: translateY(0); } }
+.agent-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); border-color: #b7ebce; }
+.agent-card.online { border-left: 3px solid #25d366; }
+.agent-card.busy { border-left: 3px solid #f59e0b; }
+.agent-card.away { border-left: 3px solid #a0aec0; }
+
+.agent-card-top { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; position: relative; }
+.agent-avatar-wrap { position: relative; flex-shrink: 0; }
+.agent-avatar {
+  width: 48px; height: 48px; background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 700; color: #fff;
+}
+.agent-status-dot {
+  width: 12px; height: 12px; border-radius: 50%; position: absolute;
+  bottom: 1px; right: 1px; border: 2px solid #fff;
+}
+.agent-info { flex: 1; }
+.agent-info h3 { font-size: 14px; font-weight: 700; color: #1a202c; margin: 0 0 2px; }
+.agent-role { display: block; font-size: 11px; color: #a0aec0; margin-bottom: 4px; }
+.agent-status-label { font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 4px; }
+.agent-email { font-size: 10px; color: #a0aec0; position: absolute; top: 0; right: 0; }
+
+.agent-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.stat-box {
+  background: #f7fafc; border-radius: 10px; padding: 10px 8px; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 3px; border: 1px solid #f0f4f8;
+}
+.stat-value { font-size: 16px; font-weight: 800; color: #1a202c; }
+.stat-key { font-size: 10px; color: #a0aec0; font-weight: 500; }
+
+.progress-label {
+  display: flex; justify-content: space-between; font-size: 11px; color: #718096;
+  margin-bottom: 6px; align-items: center;
+}
+.progress-label span { display: flex; align-items: center; gap: 4px; font-weight: 600; }
+.perf-pct { font-weight: 800; color: #1a202c; }
+.progress-bar {
+  height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; background: linear-gradient(90deg, #25d366, #128c7e);
+  border-radius: 3px; transition: width 0.8s ease;
+}
+
+@media (max-width: 768px) {
+  .agent-panel {
+    padding: 16px;
+  }
+
+  .agents-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .agent-email {
+    display: none;
+  }
+}

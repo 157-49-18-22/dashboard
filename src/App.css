@@ -1,0 +1,82 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f0f4f8;
+  color: #1a202c;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app-layout {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background: #f0f4f8;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  min-width: 0;
+  position: relative;
+}
+
+.main-content.full-view {
+  overflow: hidden;
+}
+
+.main-content.queries-view {
+  overflow: hidden;
+}
+
+/* Mobile Responsive Layers */
+.query-list-wrapper, .chat-wrapper {
+  flex: 1;
+  display: flex;
+  height: 100%;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    display: none !important;
+  }
+  
+  .app-layout {
+    flex-direction: column;
+    padding-bottom: 65px; /* Space for mobile nav */
+  }
+
+  .main-content {
+    width: 100vw;
+  }
+
+  .mobile-hidden {
+    display: none !important;
+  }
+
+  .toast-alert {
+    width: 90%;
+    font-size: 12px;
+    padding: 8px 16px;
+    top: 10px;
+  }
+}
+
+/* Scrollbar Global */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: #f0f4f8; }
+::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #a0aec0; }

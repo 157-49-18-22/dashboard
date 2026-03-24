@@ -1,0 +1,93 @@
+.stats-overview { flex: 1; background: #f0f4f8; overflow-y: auto; }
+.stats-overview::-webkit-scrollbar { width: 4px; }
+.stats-overview::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 2px; }
+.stats-inner { padding: 24px; }
+
+.stats-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+.sh-left { display: flex; align-items: center; gap: 8px; }
+.sh-left h2 { font-size: 18px; font-weight: 800; color: #1a202c; margin: 0; }
+.stats-date { font-size: 13px; color: #718096; font-weight: 500; }
+
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(195px, 1fr)); gap: 12px; margin-bottom: 20px; }
+
+.kpi-card {
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px;
+  display: flex; align-items: flex-start; gap: 12px;
+  transition: all 0.2s ease; animation: kpiIn 0.35s ease;
+  border-left: 3px solid var(--kc);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+@keyframes kpiIn { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+.kpi-card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.1); }
+.kpi-icon-wrap { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.kpi-value { font-size: 22px; font-weight: 800; color: #1a202c; line-height: 1; margin-bottom: 3px; }
+.kpi-label { font-size: 12px; color: #718096; font-weight: 600; margin-bottom: 4px; }
+.kpi-sub { font-size: 11px; color: #a0aec0; }
+
+.stats-bottom { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+.chart-card {
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.chart-card h3 { font-size: 14px; font-weight: 700; color: #1a202c; margin: 0 0 18px; display: flex; align-items: center; gap: 6px; }
+
+.bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.bar-label { font-size: 12px; color: #718096; font-weight: 600; width: 80px; flex-shrink: 0; }
+.bar-bg { flex: 1; height: 8px; background: #f0f4f8; border-radius: 4px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
+.bar-nums { display: flex; flex-direction: column; align-items: flex-end; width: 42px; font-size: 12px; }
+.bar-pct { color: #a0aec0; font-size: 10px; }
+
+.top-card { display: flex; flex-direction: column; }
+.top-performer { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; flex: 1; }
+.tp-avatar {
+  width: 64px; height: 64px; background: linear-gradient(135deg, #f093fb, #f5576c);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 20px; font-weight: 800; color: #fff; box-shadow: 0 4px 16px rgba(240,147,251,0.4);
+}
+.tp-name { font-size: 15px; font-weight: 800; color: #1a202c; }
+.tp-role { font-size: 12px; color: #a0aec0; }
+.tp-stats { display: flex; gap: 16px; padding: 12px 16px; background: #f7fafc; border-radius: 12px; width: 100%; justify-content: center; }
+.tp-stat { display: flex; flex-direction: column; align-items: center; }
+.tp-stat span { font-size: 16px; font-weight: 800; color: #1a202c; }
+.tp-stat small { font-size: 10px; color: #a0aec0; }
+
+.api-list { display: flex; flex-direction: column; gap: 10px; }
+.api-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #f7fafc; border-radius: 10px; border: 1px solid #f0f4f8; }
+.api-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.api-label { flex: 1; font-size: 12px; color: #4a5568; font-weight: 500; }
+.api-status { font-size: 11px; font-weight: 700; }
+
+@media (max-width: 1100px) { .stats-bottom { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 768px) {
+  .stats-inner {
+    padding: 16px;
+  }
+  
+  .stats-header h2 {
+    font-size: 20px;
+  }
+
+  .stats-date {
+    display: none;
+  }
+
+  .kpi-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .stats-bottom {
+    grid-template-columns: 1fr;
+  }
+
+  .tp-stats {
+    gap: 10px;
+    padding: 10px;
+  }
+}
+@media (max-width: 480px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
