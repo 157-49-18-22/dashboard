@@ -43,10 +43,39 @@ body {
 }
 
 /* Mobile Responsive Layers */
-.query-list-wrapper, .chat-wrapper {
+.query-list-wrapper {
+  flex: 0 0 auto;
+  display: flex;
+  height: 100%;
+}
+
+.chat-wrapper {
   flex: 1;
   display: flex;
   height: 100%;
+  min-width: 0;
+}
+
+.toast-alert {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: #25d366;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 700;
+  box-shadow: 0 10px 25px rgba(37,211,102,0.3);
+  z-index: 9999;
+  animation: slideInDown 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+@keyframes slideInDown {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 @media (max-width: 768px) {

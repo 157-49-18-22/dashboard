@@ -9,11 +9,12 @@ const navItems = [
   { id: "queries", label: "Queries", icon: MessageSquare },
   { id: "agents", label: "Agents", icon: Users },
   { id: "activity", label: "Activity Log", icon: ClipboardList },
-  { id: "stats", label: "Overview", icon: BarChart2 },
+  { id: "reports", label: "Reports", icon: BarChart2 },
+  { id: "stats", label: "Overview", icon: Zap },
 ];
 
 const Sidebar = () => {
-  const { activeTab, setActiveTab, queries, currentUser, newMessageAlert, soundEnabled, setSoundEnabled } = useApp();
+  const { activeTab, setActiveTab, queries, currentUser, setCurrentUser, agents, newMessageAlert, soundEnabled, setSoundEnabled } = useApp();
   const openCount = queries.filter((q) => q.status === "open").length;
   const totalUnread = queries.reduce((sum, q) => sum + q.unread, 0);
 
@@ -32,7 +33,18 @@ const Sidebar = () => {
       <div className="sidebar-user">
         <div className="user-avatar">{currentUser.avatar}</div>
         <div className="user-info">
-          <p className="user-name">{currentUser.name}</p>
+          <select 
+            className="agent-switcher" 
+            value={currentUser.id} 
+            onChange={(e) => {
+              const selected = agents.find(a => a.id === e.target.value);
+              setCurrentUser(selected);
+            }}
+          >
+            {agents.map(agent => (
+              <option key={agent.id} value={agent.id}>{agent.name}</option>
+            ))}
+          </select>
           <p className="user-role">{currentUser.role}</p>
         </div>
         <div className="user-status online"></div>

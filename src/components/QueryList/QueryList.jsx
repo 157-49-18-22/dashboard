@@ -76,7 +76,7 @@ const QueryList = () => {
         {queries.length === 0 ? (
           <div className="empty-state">
             <Search size={36} color="#cbd5e0" />
-            <p>Koi query nahi mili</p>
+            <p>No queries found</p>
           </div>
         ) : (
           queries.map((query) => {

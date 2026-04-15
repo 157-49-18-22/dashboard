@@ -91,9 +91,9 @@ const ActivityLog = () => {
                   <div className="tl-content">
                     <div className="tl-main">
                       <span className="tl-agent">{log.agentName}</span>
-                      <span className="tl-sep"> ne </span>
+                      <span className="tl-sep"> for </span>
                       <span className="tl-customer">{log.customer}</span>
-                      <span className="tl-sep"> ki query: </span>
+                      <span className="tl-sep">: </span>
                       <span className="tl-action">{log.action}</span>
                     </div>
                     <span className="tl-time">🕐 {log.time}</span>

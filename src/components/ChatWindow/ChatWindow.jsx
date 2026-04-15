@@ -1,14 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { useApp } from "../../context/AppContext";
-import { ArrowLeft, CheckCircle, Send, Smile, Paperclip, MoreVertical, Phone, Tag, StickyNote } from "lucide-react";
+import { ArrowLeft, CheckCircle, Send, Smile, Paperclip, MoreVertical, Phone, Tag, StickyNote, Search } from "lucide-react";
 import "./ChatWindow.css";
 
 const quickReplies = [
-  "Aapki query receive ho gayi hai, main abhi check karta hoon.",
-  "Kripya thoda wait karein, 2 minute mein reply karta hoon.",
-  "Aapka issue resolve ho gaya hai. Koi aur help chahiye?",
-  "Order number bata sakte hain?",
-  "Screenshot bhej sakte hain?",
+  "Your query has been received, I'm checking it now.",
+  "Please wait a moment, I'll reply in 2 minutes.",
+  "Your issue has been resolved. Anything else I can help with?",
+  "Could you provide your order number?",
+  "Could you send a screenshot please?",
 ];
 
 const ChatWindow = () => {
@@ -51,9 +51,11 @@ const ChatWindow = () => {
     return (
       <div className="chat-window empty-chat">
         <div className="empty-chat-content">
-          <div className="empty-chat-icon"><Send size={48} color="#cbd5e0" /></div>
-          <h3>Koi query select karo</h3>
-          <p>Left panel se customer query choose karo aur reply karna shuru karo</p>
+          <div className="empty-state">
+            <Search size={36} color="#cbd5e0" />
+            <p>No queries found</p>
+          </div>
+          <p>Choose a customer query from the left panel to start replying</p>
           <div className="wa-badge"><Phone size={14} /> WhatsApp Business API Connected</div>
         </div>
       </div>
@@ -112,7 +114,7 @@ const ChatWindow = () => {
           <div className="notes-panel">
             <div className="notes-header"><StickyNote size={14} /> Internal Notes (Agent only)</div>
             <div className="notes-list">
-              {notes.length === 0 ? <p className="no-notes">Koi note nahi hai</p> : notes.map((n, i) => (
+              {notes.length === 0 ? <p className="no-notes">No notes yet</p> : notes.map((n, i) => (
                 <div key={i} className="note-item">
                   <div className="note-agent">{n.agent} • {n.time}</div>
                   <div className="note-text">{n.text}</div>
@@ -120,7 +122,7 @@ const ChatWindow = () => {
               ))}
             </div>
             <div className="note-input-wrap">
-              <input value={note} onChange={e => setNote(e.target.value)} placeholder="Note likhein..." onKeyDown={e => e.key === "Enter" && addNote()} />
+              <input value={note} onChange={e => setNote(e.target.value)} placeholder="Type a note..." onKeyDown={e => e.key === "Enter" && addNote()} />
               <button onClick={addNote}>Add</button>
             </div>
           </div>
@@ -147,7 +149,7 @@ const ChatWindow = () => {
             <button className="toolbar-btn" title="Attach File"><Paperclip size={18} /></button>
           </div>
           <div className="input-wrap">
-            <textarea value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyDown={handleKeyDown} placeholder="Reply likhein... (Enter to send)" rows={1} />
+            <textarea value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyDown={handleKeyDown} placeholder="Type a reply... (Enter to send)" rows={1} />
             <button className={`send-btn ${sending ? "sending" : ""}`} onClick={() => handleSend()} disabled={!inputText.trim()}>
               <Send size={16} />
             </button>
@@ -155,7 +157,7 @@ const ChatWindow = () => {
           <div className="input-hint">Enter = Send &nbsp;•&nbsp; Shift+Enter = New line &nbsp;•&nbsp; 😊 = Quick Replies</div>
         </div>
       ) : (
-        <div className="resolved-banner"><CheckCircle size={16} /> Yeh query resolve ho gayi hai</div>
+        <div className="resolved-banner"><CheckCircle size={16} /> This query has been resolved</div>
       )}
     </div>
   );

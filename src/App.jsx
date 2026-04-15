@@ -6,6 +6,7 @@ import AgentPanel from "./components/AgentPanel/AgentPanel";
 import ActivityLog from "./components/ActivityLog/ActivityLog";
 import StatsOverview from "./components/StatsOverview/StatsOverview";
 import MobileNav from "./components/MobileNav/MobileNav";
+import Reports from "./components/Reports/Reports";
 import "./App.css";
 
 const DashboardContent = () => {
@@ -20,7 +21,7 @@ const DashboardContent = () => {
       {activeTab === "queries" && (
         <div className="main-content queries-view">
           {newMessageAlert && (
-            <div className="toast-alert">📱 Naya WhatsApp message aaya!</div>
+            <div className="toast-alert">📱 New WhatsApp message received!</div>
           )}
           {/* On mobile: show only chat when query selected, else show list */}
           <div className={`query-list-wrapper ${selectedQuery ? "mobile-hidden" : ""}`}>
@@ -37,6 +38,9 @@ const DashboardContent = () => {
       )}
       {activeTab === "activity" && (
         <div className="main-content full-view"><ActivityLog /></div>
+      )}
+      {activeTab === "reports" && (
+        <div className="main-content full-view"><Reports /></div>
       )}
       {activeTab === "stats" && (
         <div className="main-content full-view"><StatsOverview /></div>

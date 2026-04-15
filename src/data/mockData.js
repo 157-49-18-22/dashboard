@@ -63,14 +63,17 @@ export const mockAgents = [
 ];
 
 export const mockActivityLogs = [
-  { id: 1, agentId: "agent1", agentName: "Sneha Singh", action: "Query resolve ki", customer: "Suresh Gupta", time: "21:15", type: "resolved" },
-  { id: 2, agentId: "agent2", agentName: "Amit Kumar", action: "Query assign hui", customer: "Priya Verma", time: "21:00", type: "assigned" },
-  { id: 3, agentId: "agent3", agentName: "Rohan Joshi", action: "Message bheja", customer: "Vikram Patel", time: "19:50", type: "message" },
-  { id: 4, agentId: "agent1", agentName: "Sneha Singh", action: "Query resolve ki", customer: "Manoj Tiwari", time: "19:30", type: "resolved" },
-  { id: 5, agentId: "agent2", agentName: "Amit Kumar", action: "Message bheja", customer: "Priya Verma", time: "19:00", type: "message" },
-  { id: 6, agentId: "agent1", agentName: "Sneha Singh", action: "Query assign li", customer: "Anita Sharma", time: "18:45", type: "assigned" },
-  { id: 7, agentId: "agent4", agentName: "Kavya Reddy", action: "Message bheja", customer: "Deepak Rao", time: "18:30", type: "message" },
-  { id: 8, agentId: "agent3", agentName: "Rohan Joshi", action: "Query resolve ki", customer: "Sonia Patel", time: "18:00", type: "resolved" },
+  { id: 1, agentId: "agent1", agentName: "Sneha Singh", action: "Resolved the query", customer: "Suresh Gupta", time: "21:15", type: "resolved", date: "2026-04-15" },
+  { id: 2, agentId: "agent2", agentName: "Amit Kumar", action: "Query assigned", customer: "Priya Verma", time: "21:00", type: "assigned", date: "2026-04-15" },
+  { id: 3, agentId: "agent3", agentName: "Rohan Joshi", action: "Sent a message", customer: "Vikram Patel", time: "19:50", type: "message", date: "2026-04-15" },
+  { id: 4, agentId: "agent1", agentName: "Sneha Singh", action: "Resolved the query", customer: "Manoj Tiwari", time: "19:30", type: "resolved", date: "2026-04-15" },
+  { id: 5, agentId: "agent2", agentName: "Amit Kumar", action: "Sent a message", customer: "Priya Verma", time: "19:00", type: "message", date: "2026-04-15" },
+  { id: 6, agentId: "agent1", agentName: "Sneha Singh", action: "Assigned to self", customer: "Anita Sharma", time: "18:45", type: "assigned", date: "2026-04-15" },
+  { id: 7, agentId: "agent4", agentName: "Kavya Reddy", action: "Sent a message", customer: "Deepak Rao", time: "18:30", type: "message", date: "2026-04-15" },
+  { id: 8, agentId: "agent3", agentName: "Rohan Joshi", action: "Resolved the query", customer: "Sonia Patel", time: "18:00", type: "resolved", date: "2026-04-15" },
+  { id: 9, agentId: "agent1", agentName: "Sneha Singh", action: "Resolved the query", customer: "Manoj Tiwari", time: "10:30", type: "resolved", date: "2026-04-14" },
+  { id: 10, agentId: "agent2", agentName: "Amit Kumar", action: "Sent a message", customer: "Priya Verma", time: "11:00", type: "message", date: "2026-04-14" },
+  { id: 11, agentId: "agent1", agentName: "Sneha Singh", action: "Sent a message", customer: "Rahul Sharma", time: "09:45", type: "message", date: "2026-04-14" },
 ];
 
 export const currentUser = { id: "agent1", name: "Sneha Singh", avatar: "SS", role: "Senior Agent" };
