@@ -1,6 +1,6 @@
 import { useApp } from "../../context/AppContext";
 import {
-  MessageSquare, Users, ClipboardList, BarChart2,
+  MessageSquare, Users, ClipboardList, BarChart2, Send,
   Wifi, Zap, Bell, BellOff
 } from "lucide-react";
 import "./Sidebar.css";
@@ -8,6 +8,7 @@ import "./Sidebar.css";
 const navItems = [
   { id: "queries", label: "Queries", icon: MessageSquare },
   { id: "agents", label: "Agents", icon: Users },
+  { id: "sent", label: "Sent", icon: Send },
   { id: "activity", label: "Activity Log", icon: ClipboardList },
   { id: "reports", label: "Reports", icon: BarChart2 },
   { id: "stats", label: "Overview", icon: Zap },

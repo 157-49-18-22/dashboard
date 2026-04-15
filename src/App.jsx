@@ -7,6 +7,7 @@ import ActivityLog from "./components/ActivityLog/ActivityLog";
 import StatsOverview from "./components/StatsOverview/StatsOverview";
 import MobileNav from "./components/MobileNav/MobileNav";
 import Reports from "./components/Reports/Reports";
+import SentMessages from "./components/SentMessages/SentMessages";
 import "./App.css";
 
 const DashboardContent = () => {
@@ -41,6 +42,9 @@ const DashboardContent = () => {
       )}
       {activeTab === "reports" && (
         <div className="main-content full-view"><Reports /></div>
+      )}
+      {activeTab === "sent" && (
+        <div className="main-content full-view"><SentMessages /></div>
       )}
       {activeTab === "stats" && (
         <div className="main-content full-view"><StatsOverview /></div>
