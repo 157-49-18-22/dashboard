@@ -118,6 +118,11 @@ export const AppProvider = ({ children }) => {
       setNewMessageAlert(true);
       if (shouldPlaySound(newQuery.id, newQuery)) {
         playNotificationSound();
+        if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+          new Notification("New Query Received", {
+            body: `${newQuery.name}: ${newQuery.message}`,
+          });
+        }
       }
       setTimeout(() => setNewMessageAlert(false), 3000);
     });
@@ -136,6 +141,11 @@ export const AppProvider = ({ children }) => {
       setNewMessageAlert(true);
       if (shouldPlaySound(queryId, query)) {
         playNotificationSound();
+        if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+          new Notification("New Message from " + (query?.name || "Customer"), {
+            body: message?.text || "New message received",
+          });
+        }
       }
       setTimeout(() => setNewMessageAlert(false), 3000);
     });
@@ -270,6 +280,11 @@ export const AppProvider = ({ children }) => {
       setNewMessageAlert(true);
       if (shouldPlaySound()) {
         playNotificationSound();
+        if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+          new Notification("New Query Received (Mock)", {
+            body: `${newQuery.name}: ${newQuery.message}`,
+          });
+        }
       }
       setTimeout(() => setNewMessageAlert(false), 3000);
     }, 30000);
@@ -346,6 +361,12 @@ export const AppProvider = ({ children }) => {
         setNewMessageAlert(true);
         if (shouldPlaySound()) {
           playNotificationSound();
+          const targetQ = queries.find(item => item.id === queryId);
+          if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+            new Notification("New Message from " + (targetQ?.name || "Customer"), {
+              body: randomReply,
+            });
+          }
         }
         setTimeout(() => setNewMessageAlert(false), 3000);
       }, 2000);
