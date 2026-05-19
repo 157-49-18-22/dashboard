@@ -27,6 +27,10 @@ const request = async (endpoint, options = {}) => {
   const data = await res.json();
 
   if (!res.ok) {
+    if (res.status === 401) {
+      clearToken();
+      localStorage.removeItem("crm_user");
+    }
     throw new Error(data.message || "Request failed");
   }
 
