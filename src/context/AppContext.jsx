@@ -43,8 +43,8 @@ export const AppProvider = ({ children }) => {
     return true;
   }, []);
 
-  const playNotificationSound = useCallback(() => {
-    if (!soundEnabledRef.current) return;
+  const playNotificationSound = useCallback((forcePlay = false) => {
+    if (!soundEnabledRef.current && !forcePlay) return;
     try {
       const audio = new Audio("data:audio/wav;base64," + CHIME_WAV_BASE64);
       audio.play().catch((err) => {
@@ -268,10 +268,13 @@ export const AppProvider = ({ children }) => {
       };
       setQueries((prev) => [newQuery, ...prev]);
       setNewMessageAlert(true);
+      if (shouldPlaySound()) {
+        playNotificationSound();
+      }
       setTimeout(() => setNewMessageAlert(false), 3000);
     }, 30000);
     return () => clearInterval(interval);
-  }, [backendOnline]);
+  }, [backendOnline, playNotificationSound]);
 
   // ── Actions ────────────────────────────────────────────────
 
@@ -294,7 +297,7 @@ export const AppProvider = ({ children }) => {
       time, type: "message", date: new Date().toISOString().split("T")[0],
     }, ...prev]);
 
-    // Real backend call
+    // Real backend call or mock auto-reply
     if (backendOnline) {
       try {
         await messagesAPI.send(queryId, text);
@@ -310,8 +313,44 @@ export const AppProvider = ({ children }) => {
         );
         throw err;
       }
+    } else {
+      // Mock mode auto-reply simulation to test sound immediately!
+      setTimeout(() => {
+        const replies = [
+          "Okay, thank you!",
+          "Can you please check my issue?",
+          "Yes, that sounds perfect.",
+          "I am waiting.",
+          "Got it, thanks!",
+        ];
+        const randomReply = replies[Math.floor(Math.random() * replies.length)];
+        const replyMsg = {
+          id: Date.now() + 1,
+          sender: "customer",
+          text: randomReply,
+          time: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })
+        };
+        setQueries((prev) =>
+          prev.map((q) =>
+            q.id === queryId
+              ? {
+                  ...q,
+                  messages: [...(q.messages || []), replyMsg],
+                  message: randomReply,
+                  unread: (q.unread || 0) + 1,
+                  time: new Date().toISOString(),
+                }
+              : q
+          )
+        );
+        setNewMessageAlert(true);
+        if (shouldPlaySound()) {
+          playNotificationSound();
+        }
+        setTimeout(() => setNewMessageAlert(false), 3000);
+      }, 2000);
     }
-  }, [currentUser, queries, backendOnline]);
+  }, [currentUser, queries, backendOnline, playNotificationSound]);
 
   const resolveQuery = useCallback(async (queryId) => {
     setQueries((prev) =>

@@ -105,7 +105,7 @@ const Sidebar = ({ onLogout }) => {
           onClick={() => {
             const newState = !soundEnabled;
             setSoundEnabled(newState);
-            if (newState) playNotificationSound();
+            if (newState) playNotificationSound(true);
           }}
           title={soundEnabled ? "Sound On" : "Sound Off"}
         >
