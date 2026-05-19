@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { AppProvider, useApp } from "./context/AppContext";
 import Sidebar from "./components/Sidebar/Sidebar";
 import QueryList from "./components/QueryList/QueryList";
@@ -8,15 +9,17 @@ import StatsOverview from "./components/StatsOverview/StatsOverview";
 import MobileNav from "./components/MobileNav/MobileNav";
 import Reports from "./components/Reports/Reports";
 import SentMessages from "./components/SentMessages/SentMessages";
+import LoginPage from "./components/LoginPage/LoginPage";
+import QueryPool from "./components/QueryPool/QueryPool";
 import "./App.css";
 
-const DashboardContent = () => {
+const DashboardContent = ({ onLogout }) => {
   const { activeTab, newMessageAlert, selectedQuery } = useApp();
 
   return (
     <div className="app-layout">
       {/* Sidebar — desktop only */}
-      <Sidebar />
+      <Sidebar onLogout={onLogout} />
 
       {/* Main area */}
       {activeTab === "queries" && (
@@ -31,6 +34,12 @@ const DashboardContent = () => {
           <div className={`chat-wrapper ${!selectedQuery ? "mobile-hidden" : ""}`}>
             <ChatWindow />
           </div>
+        </div>
+      )}
+
+      {activeTab === "pool" && (
+        <div className="main-content full-view">
+          <QueryPool />
         </div>
       )}
 
@@ -57,9 +66,24 @@ const DashboardContent = () => {
 };
 
 function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem("crm_token"));
+
+  const handleLogin = (agent, token) => {
+    setIsLoggedIn(true);
+  };
+
+  const handleLogout = () => {
+    localStorage.clear();
+    setIsLoggedIn(false);
+  };
+
+  if (!isLoggedIn) {
+    return <LoginPage onLogin={handleLogin} />;
+  }
+
   return (
     <AppProvider>
-      <DashboardContent />
+      <DashboardContent onLogout={handleLogout} />
     </AppProvider>
   );
 }

@@ -362,3 +362,16 @@
 .log-time { font-size: 10px; opacity: 0.6; display: block; text-align: right; margin-top: 6px; }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

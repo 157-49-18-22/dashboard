@@ -28,7 +28,7 @@ const getTimerLabel = (isoString) => {
 };
 
 const QueryList = () => {
-  const { getFilteredQueries, selectedQuery, setSelectedQuery, filterStatus, setFilterStatus, assignQuery } = useApp();
+  const { getFilteredQueries, selectedQuery, setSelectedQuery, filterStatus, setFilterStatus, assignQuery, activeTab } = useApp();
   const [searchText, setSearchText] = useState("");
 
   const queries = getFilteredQueries().filter((q) =>
@@ -38,14 +38,17 @@ const QueryList = () => {
 
   const handleSelectQuery = (query) => {
     setSelectedQuery(query);
-    if (!query.assignedTo) assignQuery(query.id);
+    // In Query Pool, do not auto-assign. Let the agent view and accept it manually.
+    if (activeTab !== "pool" && !query.assignedTo) {
+      assignQuery(query.id);
+    }
   };
 
   return (
     <div className="query-list-panel">
       <div className="query-list-header">
         <div className="qlh-top">
-          <h2>Incoming Queries</h2>
+          <h2>{activeTab === "pool" ? "Query Pool" : "Incoming Queries"}</h2>
           <span className="query-total-badge">{queries.length}</span>
         </div>
 
@@ -101,7 +104,7 @@ const QueryList = () => {
                     </span>
                   </div>
                   <div className="query-phone">{query.from}</div>
-                  <div className="query-preview-text">{query.message.substring(0, 42)}...</div>
+                  <div className="query-preview-text">{query.message.length > 42 ? query.message.substring(0, 42) + '...' : query.message}</div>
                   <div className="query-bottom">
                     <span className="priority-dot" style={{ background: pc.color }} title={`Priority: ${pc.label}`}></span>
                     <span
