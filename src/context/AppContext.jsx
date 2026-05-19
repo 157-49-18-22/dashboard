@@ -38,36 +38,16 @@ export const AppProvider = ({ children }) => {
     queriesRef.current = queries;
   }, [queries]);
 
-  // Helper to check if sound should play for a given query based on the pool or 30-min SLA rule
-  const shouldPlaySound = useCallback((queryId, fallbackQueryObj) => {
-    // 1. Try to find the query in our active state
-    let q = queriesRef.current.find((item) => item.id === queryId) || fallbackQueryObj;
-    
-    // If no query exists at all, default to playing sound as a safe backup
-    if (!q) return true;
-    
-    // 2. Pool rule: If it is unassigned (!assignedTo), always play sound
-    if (!q.assignedTo) {
-      return true;
-    }
-    
-    // 3. 30-Minute SLA rule: If assigned, only play sound if the new message is within 30 minutes of acceptedAt
-    if (q.acceptedAt) {
-      const acceptedTime = new Date(q.acceptedAt).getTime();
-      const diffMs = Date.now() - acceptedTime;
-      const thirtyMinutesMs = 30 * 60 * 1000;
-      return diffMs <= thirtyMinutesMs;
-    }
-    
-    return false;
+  // Helper to check if sound should play (simplified: always play if sound is enabled)
+  const shouldPlaySound = useCallback(() => {
+    return true;
   }, []);
 
   const playNotificationSound = useCallback(() => {
     if (!soundEnabledRef.current) return;
     try {
-      // Instantly reset the chime to beginning to allow overlapping plays
-      notificationAudio.currentTime = 0;
-      notificationAudio.play().catch((err) => {
+      const audio = new Audio("data:audio/wav;base64," + CHIME_WAV_BASE64);
+      audio.play().catch((err) => {
         console.warn("Audio playback was blocked or failed:", err);
       });
     } catch (err) {
@@ -469,6 +449,7 @@ export const AppProvider = ({ children }) => {
       filterStatus, setFilterStatus,
       newMessageAlert,
       soundEnabled, setSoundEnabled,
+      playNotificationSound,
       sendMessage, resolveQuery, assignQuery,
       getFilteredQueries,
       currentUser, setCurrentUser,
