@@ -517,6 +517,17 @@ export const AppProvider = ({ children }) => {
     }
   }, [backendOnline]);
 
+  const resetAgentPassword = useCallback(async (agentId, newPassword) => {
+    if (backendOnline) {
+      const res = await agentsAPI.resetPassword(agentId, newPassword);
+      if (res.success) return res;
+      throw new Error(res.message || "Failed to reset password");
+    } else {
+      // Mock mode — just return success (no real auth in mock)
+      return { success: true, message: "Password reset successfully (mock mode)" };
+    }
+  }, [backendOnline]);
+
   // Login action
   const login = (agent, token) => {
     localStorage.setItem("crm_token", token);
@@ -544,6 +555,7 @@ export const AppProvider = ({ children }) => {
       login,
       createAgent,
       deleteAgent,
+      resetAgentPassword,
     }}>
       {children}
     </AppContext.Provider>

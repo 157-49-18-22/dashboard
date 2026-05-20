@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useApp } from "../../context/AppContext";
 import { 
   Users, Circle, MessageSquare, CheckCircle, Clock, 
-  TrendingUp, UserPlus, Trash2, X, Mail, Lock, Shield, User, AlertCircle
+  TrendingUp, UserPlus, Trash2, X, Mail, Lock, Shield, User, AlertCircle, KeyRound, Eye, EyeOff
 } from "lucide-react";
 import "./AgentPanel.css";
 
@@ -14,38 +14,43 @@ const statusConfig = {
 };
 
 const AgentPanel = () => {
-  const { agents, queries, createAgent, deleteAgent, currentUser } = useApp();
+  const { agents, queries, createAgent, deleteAgent, resetAgentPassword, currentUser } = useApp();
+
+  // ── Add Agent Modal State ──────────────────────────────────
   const [showModal, setShowModal] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("Support Agent");
-  
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // ── Reset Password Modal State ─────────────────────────────
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [selectedAgentForReset, setSelectedAgentForReset] = useState(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showNewPwd, setShowNewPwd] = useState(false);
+  const [showConfirmPwd, setShowConfirmPwd] = useState(false);
+  const [resetError, setResetError] = useState("");
+  const [resetSuccess, setResetSuccess] = useState("");
+  const [isResetSubmitting, setIsResetSubmitting] = useState(false);
+
   const onlineCount = agents.filter(a => a.status === "online").length;
 
+  // ── Add Agent handlers ─────────────────────────────────────
   const handleOpenModal = () => {
-    setName("");
-    setEmail("");
-    setPassword("");
-    setRole("Support Agent");
-    setError("");
-    setSuccess("");
+    setName(""); setEmail(""); setPassword(""); setRole("Support Agent");
+    setError(""); setSuccess("");
     setShowModal(true);
   };
 
-  const handleCloseModal = () => {
-    setShowModal(false);
-  };
+  const handleCloseModal = () => setShowModal(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
-    
+    setError(""); setSuccess("");
     if (!name.trim()) return setError("Name is required");
     if (!email.trim()) return setError("Email is required");
     if (!password || password.length < 6) return setError("Password must be at least 6 characters");
@@ -54,16 +59,8 @@ const AgentPanel = () => {
     try {
       await createAgent({ name, email, password, role });
       setSuccess("Agent created successfully!");
-      setName("");
-      setEmail("");
-      setPassword("");
-      setRole("Support Agent");
-      
-      // Auto close modal after a short delay
-      setTimeout(() => {
-        setShowModal(false);
-        setSuccess("");
-      }, 1500);
+      setName(""); setEmail(""); setPassword(""); setRole("Support Agent");
+      setTimeout(() => { setShowModal(false); setSuccess(""); }, 1500);
     } catch (err) {
       setError(err.message || "Failed to create agent");
     } finally {
@@ -81,7 +78,43 @@ const AgentPanel = () => {
     }
   };
 
-  // Show delete/add buttons to Admin or Senior roles
+  // ── Reset Password handlers ────────────────────────────────
+  const handleOpenReset = (agent) => {
+    setSelectedAgentForReset(agent);
+    setNewPassword(""); setConfirmPassword("");
+    setShowNewPwd(false); setShowConfirmPwd(false);
+    setResetError(""); setResetSuccess("");
+    setShowResetModal(true);
+  };
+
+  const handleCloseReset = () => {
+    setShowResetModal(false);
+    setSelectedAgentForReset(null);
+  };
+
+  const handleResetSubmit = async (e) => {
+    e.preventDefault();
+    setResetError(""); setResetSuccess("");
+
+    if (!newPassword || newPassword.length < 6)
+      return setResetError("New password must be at least 6 characters");
+    if (newPassword !== confirmPassword)
+      return setResetError("Passwords do not match");
+
+    setIsResetSubmitting(true);
+    try {
+      const res = await resetAgentPassword(selectedAgentForReset.id, newPassword);
+      setResetSuccess(res.message || "Password reset successfully!");
+      setNewPassword(""); setConfirmPassword("");
+      setTimeout(() => { handleCloseReset(); }, 2000);
+    } catch (err) {
+      setResetError(err.message || "Failed to reset password");
+    } finally {
+      setIsResetSubmitting(false);
+    }
+  };
+
+  // Show delete/add/reset buttons to Admin or Senior roles
   const canManageAgents = currentUser?.role?.toLowerCase()?.includes("admin") || 
                           currentUser?.role?.toLowerCase()?.includes("senior");
 
@@ -106,8 +139,6 @@ const AgentPanel = () => {
       <div className="agents-grid">
         {agents.map((agent) => {
           const sc = statusConfig[agent.status] || statusConfig.offline;
-          const assignedQueries = queries.filter(q => q.assignedTo === agent.id).length;
-          const resolvedQueries = queries.filter(q => q.assignedTo === agent.id && q.status === "resolved").length;
           const perfPct = Math.min(100, Math.round((agent.resolvedToday / 15) * 100));
           const isCurrentUser = currentUser?.id === agent.id;
 
@@ -121,20 +152,31 @@ const AgentPanel = () => {
                 <div className="agent-info">
                   <h3>{agent.name} {isCurrentUser && <span style={{ color: "#764ba2", fontSize: "10px", fontWeight: "700" }}>(You)</span>}</h3>
                   <span className="agent-role">{agent.role}</span>
+                  <div className="agent-email">{agent.email}</div>
                   <span className="agent-status-label" style={{ color: sc.color }}>
                     <Circle size={8} fill={sc.color} /> {sc.label}
                   </span>
                 </div>
-                <div className="agent-email">{agent.email}</div>
-                
-                {canManageAgents && !isCurrentUser && (
-                  <button 
-                    className="agent-delete-btn" 
-                    onClick={() => handleDelete(agent.id, agent.name)}
-                    title={`Delete agent ${agent.name}`}
-                  >
-                    <Trash2 size={14} />
-                  </button>
+
+                {canManageAgents && (
+                  <div className="agent-card-actions">
+                    <button
+                      className="agent-action-btn reset-btn"
+                      onClick={() => handleOpenReset(agent)}
+                      title={`Reset password for ${agent.name}`}
+                    >
+                      <KeyRound size={16} />
+                    </button>
+                    {!isCurrentUser && (
+                      <button
+                        className="agent-action-btn delete-btn"
+                        onClick={() => handleDelete(agent.id, agent.name)}
+                        title={`Delete agent ${agent.name}`}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -175,7 +217,7 @@ const AgentPanel = () => {
         })}
       </div>
 
-      {/* Add Agent Modal */}
+      {/* ── Add Agent Modal ── */}
       {showModal && (
         <div className="agent-modal-overlay" onClick={handleCloseModal}>
           <div className="agent-modal" onClick={(e) => e.stopPropagation()}>
@@ -209,12 +251,8 @@ const AgentPanel = () => {
                   <div className="agent-input-wrapper">
                     <User size={14} className="agent-input-icon" />
                     <input
-                      id="agent-name"
-                      type="text"
-                      placeholder="e.g. Sneha Singh"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      required
+                      id="agent-name" type="text" placeholder="e.g. Sneha Singh"
+                      value={name} onChange={(e) => setName(e.target.value)} required
                     />
                   </div>
                 </div>
@@ -224,12 +262,8 @@ const AgentPanel = () => {
                   <div className="agent-input-wrapper">
                     <Mail size={14} className="agent-input-icon" />
                     <input
-                      id="agent-email"
-                      type="email"
-                      placeholder="e.g. sneha@company.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
+                      id="agent-email" type="email" placeholder="e.g. sneha@company.com"
+                      value={email} onChange={(e) => setEmail(e.target.value)} required
                     />
                   </div>
                 </div>
@@ -239,12 +273,8 @@ const AgentPanel = () => {
                   <div className="agent-input-wrapper">
                     <Lock size={14} className="agent-input-icon" />
                     <input
-                      id="agent-password"
-                      type="password"
-                      placeholder="Min 6 characters"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
+                      id="agent-password" type="password" placeholder="Min 6 characters"
+                      value={password} onChange={(e) => setPassword(e.target.value)} required
                     />
                   </div>
                 </div>
@@ -253,11 +283,7 @@ const AgentPanel = () => {
                   <label htmlFor="agent-role">System Role</label>
                   <div className="agent-input-wrapper">
                     <Shield size={14} className="agent-input-icon" />
-                    <select
-                      id="agent-role"
-                      value={role}
-                      onChange={(e) => setRole(e.target.value)}
-                    >
+                    <select id="agent-role" value={role} onChange={(e) => setRole(e.target.value)}>
                       <option value="Support Agent">Support Agent</option>
                       <option value="Senior Agent">Senior Agent</option>
                       <option value="Junior Agent">Junior Agent</option>
@@ -273,6 +299,120 @@ const AgentPanel = () => {
                 </button>
                 <button type="submit" className="agent-btn-submit" disabled={isSubmitting}>
                   {isSubmitting ? "Creating..." : "Create Agent"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Reset Password Modal ── */}
+      {showResetModal && selectedAgentForReset && (
+        <div className="agent-modal-overlay" onClick={handleCloseReset}>
+          <div className="agent-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="agent-modal-header reset-header">
+              <div>
+                <h3>Reset Password</h3>
+                <p>Set a new password for <strong style={{ color: "#c6f6d5" }}>{selectedAgentForReset.name}</strong></p>
+              </div>
+              <button className="agent-modal-close" onClick={handleCloseReset}>
+                <X size={16} />
+              </button>
+            </div>
+
+            <form onSubmit={handleResetSubmit}>
+              <div className="agent-modal-body">
+                {/* Agent info badge */}
+                <div className="reset-agent-badge">
+                  <div className="reset-agent-avatar">{selectedAgentForReset.avatar}</div>
+                  <div className="reset-agent-info">
+                    <span className="reset-agent-name">{selectedAgentForReset.name}</span>
+                    <span className="reset-agent-role">{selectedAgentForReset.role}</span>
+                  </div>
+                  <div className="reset-agent-icon">
+                    <KeyRound size={20} color="#667eea" />
+                  </div>
+                </div>
+
+                {resetError && (
+                  <div className="agent-modal-error">
+                    <AlertCircle size={14} />
+                    <span>{resetError}</span>
+                  </div>
+                )}
+                {resetSuccess && (
+                  <div className="agent-modal-success">
+                    <CheckCircle size={14} />
+                    <span>{resetSuccess}</span>
+                  </div>
+                )}
+
+                <div className="agent-form-group">
+                  <label htmlFor="reset-new-password">New Password</label>
+                  <div className="agent-input-wrapper">
+                    <Lock size={14} className="agent-input-icon" />
+                    <input
+                      id="reset-new-password"
+                      type={showNewPwd ? "text" : "password"}
+                      placeholder="Min 6 characters"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      style={{ paddingRight: "42px" }}
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="pwd-toggle-btn"
+                      onClick={() => setShowNewPwd((p) => !p)}
+                      tabIndex={-1}
+                    >
+                      {showNewPwd ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="agent-form-group">
+                  <label htmlFor="reset-confirm-password">Confirm New Password</label>
+                  <div className="agent-input-wrapper">
+                    <Lock size={14} className="agent-input-icon" />
+                    <input
+                      id="reset-confirm-password"
+                      type={showConfirmPwd ? "text" : "password"}
+                      placeholder="Re-enter password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      style={{ paddingRight: "42px" }}
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="pwd-toggle-btn"
+                      onClick={() => setShowConfirmPwd((p) => !p)}
+                      tabIndex={-1}
+                    >
+                      {showConfirmPwd ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
+                  {/* Password match indicator */}
+                  {confirmPassword && (
+                    <div className={`pwd-match-hint ${newPassword === confirmPassword ? "match" : "no-match"}`}>
+                      {newPassword === confirmPassword ? "✓ Passwords match" : "✗ Passwords do not match"}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="agent-modal-footer">
+                <button type="button" className="agent-btn-cancel" onClick={handleCloseReset}>
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="agent-btn-submit reset-submit-btn"
+                  disabled={isResetSubmitting}
+                >
+                  <KeyRound size={14} />
+                  {isResetSubmitting ? "Resetting..." : "Reset Password"}
                 </button>
               </div>
             </form>

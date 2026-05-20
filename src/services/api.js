@@ -106,6 +106,11 @@ export const agentsAPI = {
     request(`/agents/${id}/status`, { method: "PATCH", body: JSON.stringify({ status }) }),
   delete: (id) => request(`/agents/${id}`, { method: "DELETE" }),
   getStats: () => request("/agents/stats/summary"),
+  resetPassword: (id, newPassword) =>
+    request(`/agents/${id}/reset-password`, {
+      method: "PATCH",
+      body: JSON.stringify({ newPassword }),
+    }),
 };
 
 // ── Activity ───────────────────────────────────────────────────
