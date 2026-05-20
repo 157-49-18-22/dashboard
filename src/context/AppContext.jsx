@@ -319,16 +319,21 @@ export const AppProvider = ({ children }) => {
 
   // ── Actions ────────────────────────────────────────────────
 
-  const sendMessage = useCallback(async (queryId, text) => {
-    if (!text.trim()) return;
+  const sendMessage = useCallback(async (queryId, payload) => {
+    const text = payload?.text || "";
+    const attachmentUrl = payload?.attachmentUrl || "";
+    const messageType = payload?.messageType || "text";
+    if (!text.trim() && !attachmentUrl.trim()) return;
     const time = new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
-    const newMsg = { id: Date.now(), sender: "agent", text, time, agentName: currentUser?.name };
+    const messageText = attachmentUrl || text;
+    const previewText = messageType === "image" ? "[Image]" : messageType === "document" ? "[Document]" : messageText;
+    const newMsg = { id: Date.now(), sender: "agent", text: messageText, time, agentName: currentUser?.name, messageType };
 
     // Optimistic update
     setQueries((prev) =>
       prev.map((q) =>
         q.id === queryId
-          ? { ...q, messages: [...(q.messages || []), newMsg], message: text, assignedTo: currentUser?.id }
+          ? { ...q, messages: [...(q.messages || []), newMsg], message: previewText, assignedTo: currentUser?.id }
           : q
       )
     );
@@ -341,7 +346,7 @@ export const AppProvider = ({ children }) => {
     // Real backend call or mock auto-reply
     if (backendOnline) {
       try {
-        await messagesAPI.send(queryId, text);
+        await messagesAPI.send(queryId, payload);
       } catch (err) {
         console.error("Send message failed:", err.message);
         // Revert optimistic update on failure

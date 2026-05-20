@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useApp } from "../../context/AppContext";
 import { 
-  ArrowLeft, CheckCircle, AlertCircle, Send, Smile, Phone, Tag, StickyNote, Search, Loader, User 
+  ArrowLeft, CheckCircle, AlertCircle, Send, Smile, Phone, Tag, StickyNote, Search, Loader, User, Paperclip, FileText, Download
 } from "lucide-react";
 import { messagesAPI } from "../../services/api";
 import "./ChatWindow.css";
@@ -26,9 +26,11 @@ const ChatWindow = () => {
   const [note, setNote] = useState("");
   const [notes, setNotes] = useState([]);
   const [sending, setSending] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [fetchedMessages, setFetchedMessages] = useState([]);
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   const query = queries.find((q) => q.id === selectedQuery?.id);
 
@@ -98,7 +100,7 @@ const ChatWindow = () => {
     if (!msg.trim() || !query) return;
     setSending(true);
     try {
-      await sendMessage(query.id, msg);
+      await sendMessage(query.id, { text: msg, messageType: "text" });
       setInputText("");
       setShowQuickReplies(false);
     } catch (err) {
@@ -111,6 +113,38 @@ const ChatWindow = () => {
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
+  };
+
+  const getMessageType = (msg) => {
+    if (msg?.messageType) return msg.messageType;
+    const text = (msg?.text || "").toLowerCase();
+    const isUrl = /^https?:\/\//.test(text);
+    if (!isUrl) return "text";
+    if (/\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(text)) return "image";
+    if (/\.(pdf|doc|docx|xls|xlsx|txt)(\?|$)/i.test(text)) return "document";
+    return "text";
+  };
+
+  const handleAttachmentPick = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !query) return;
+    setUploading(true);
+    try {
+      const uploadRes = await messagesAPI.uploadAttachment(file);
+      const lowerType = (file.type || "").toLowerCase();
+      const messageType = lowerType.startsWith("image/") ? "image" : "document";
+      await sendMessage(query.id, {
+        text: "",
+        messageType,
+        attachmentUrl: uploadRes.attachmentUrl,
+        fileName: uploadRes.fileName,
+      });
+    } catch (err) {
+      alert(err.message || "Attachment upload failed");
+    } finally {
+      e.target.value = "";
+      setUploading(false);
+    }
   };
 
   const addNote = () => {
@@ -248,7 +282,19 @@ const ChatWindow = () => {
             <div key={msg.id} className={`message-wrap ${msg.sender === "agent" ? "agent-msg" : "customer-msg"}`}>
               {msg.sender === "agent" && <div className="agent-tag">{msg.agentName || currentUser?.name}</div>}
               <div className={`message-bubble ${msg.sender}`}>
-                <p>{msg.text}</p>
+                {getMessageType(msg) === "image" ? (
+                  <a href={msg.text} target="_blank" rel="noreferrer" className="attachment-image-link">
+                    <img src={msg.text} alt="attachment" className="attachment-image" />
+                  </a>
+                ) : getMessageType(msg) === "document" ? (
+                  <a href={msg.text} target="_blank" rel="noreferrer" className="attachment-doc">
+                    <FileText size={16} />
+                    <span>Open document</span>
+                    <Download size={14} />
+                  </a>
+                ) : (
+                  <p>{msg.text}</p>
+                )}
                 <span className="msg-time">{msg.time}{msg.sender === "agent" && <span className="msg-ticks"> ✓✓</span>}</span>
               </div>
             </div>
@@ -316,14 +362,24 @@ const ChatWindow = () => {
             <button className="toolbar-btn" onClick={() => setShowQuickReplies(!showQuickReplies)} title="Quick Replies">
               <Smile size={18} />
             </button>
+            <button className="toolbar-btn" onClick={() => fileInputRef.current?.click()} title="Attach File" disabled={uploading}>
+              <Paperclip size={18} />
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              style={{ display: "none" }}
+              accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+              onChange={handleAttachmentPick}
+            />
           </div>
           <div className="input-wrap">
             <textarea value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyDown={handleKeyDown} placeholder="Type a reply... (Enter to send)" rows={1} />
-            <button className={`send-btn ${sending ? "sending" : ""}`} onClick={() => handleSend()} disabled={!inputText.trim()}>
+            <button className={`send-btn ${sending ? "sending" : ""}`} onClick={() => handleSend()} disabled={!inputText.trim() || uploading}>
               <Send size={16} />
             </button>
           </div>
-          <div className="input-hint">Enter = Send &nbsp;•&nbsp; Shift+Enter = New line &nbsp;•&nbsp; 😊 = Quick Replies</div>
+          <div className="input-hint">Enter = Send &nbsp;•&nbsp; Shift+Enter = New line &nbsp;•&nbsp; 📎 = Attachment</div>
         </div>
       ) : (
         <div className="resolved-banner"><CheckCircle size={16} /> This query has been resolved</div>

@@ -13,9 +13,10 @@ const clearToken = () => localStorage.removeItem("crm_token");
 // ── Core fetch wrapper ─────────────────────────────────────────
 const request = async (endpoint, options = {}) => {
   const token = getToken();
+  const isFormData = options.body instanceof FormData;
   const headers = {
-    "Content-Type": "application/json",
     ...(token && { Authorization: `Bearer ${token}` }),
+    ...(!isFormData && { "Content-Type": "application/json" }),
     ...options.headers,
   };
 
@@ -75,11 +76,19 @@ export const queriesAPI = {
 // ── Messages ───────────────────────────────────────────────────
 export const messagesAPI = {
   getByQuery: (queryId) => request(`/queries/${queryId}/messages`),
-  send: (queryId, text) =>
+  send: (queryId, payload) =>
     request(`/queries/${queryId}/messages`, {
       method: "POST",
-      body: JSON.stringify({ text }),
+      body: JSON.stringify(payload),
     }),
+  uploadAttachment: (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return request("/messages/upload", {
+      method: "POST",
+      body: formData,
+    });
+  },
   getSent: () => request("/messages/sent"),
   
   // WhatsApp Template APIs
