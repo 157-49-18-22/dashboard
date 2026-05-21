@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { useApp } from "../../context/AppContext";
 import { 
-  ArrowLeft, CheckCircle, AlertCircle, Send, Smile, Phone, Tag, StickyNote, Search, Loader, User, Paperclip, FileText, Download
+  ArrowLeft, CheckCircle, AlertCircle, Send, Smile, Phone, Tag, StickyNote, Search, Loader, User, Paperclip, FileText, Download, Reply, X
 } from "lucide-react";
 import { messagesAPI } from "../../services/api";
+import { getMessageType, getReplyPreviewText, buildReplyToPayload } from "./messageUtils";
 import "./ChatWindow.css";
 
 const quickReplies = [
@@ -29,6 +30,7 @@ const ChatWindow = () => {
   const [uploading, setUploading] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [fetchedMessages, setFetchedMessages] = useState([]);
+  const [replyingTo, setReplyingTo] = useState(null);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -46,6 +48,40 @@ const ChatWindow = () => {
       .catch(() => setFetchedMessages([]))
       .finally(() => setLoadingMessages(false));
   }, [query?.id, backendOnline]);
+
+  useEffect(() => {
+    setReplyingTo(null);
+  }, [query?.id]);
+
+  const canReply = query?.assignedTo === currentUser?.id && query?.status !== "resolved";
+
+  const renderQuotedBlock = (msg) => {
+    if (!msg.replyToText && !msg.replyToMessageId) return null;
+    const isCustomer = msg.replyToSender === "customer";
+    const previewType = msg.replyToMessageType || "text";
+    const isImageQuote = previewType === "image" && msg.replyToText?.startsWith("http");
+    return (
+      <div
+        className={`quoted-message ${isCustomer ? "quoted-customer" : "quoted-agent"}`}
+        role="button"
+        tabIndex={0}
+        onClick={() => {
+          const el = document.getElementById(`msg-${msg.replyToMessageId}`);
+          el?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }}
+        onKeyDown={(e) => e.key === "Enter" && document.getElementById(`msg-${msg.replyToMessageId}`)?.scrollIntoView({ behavior: "smooth", block: "center" })}
+      >
+        <span className="quoted-author">{isCustomer ? query?.name || "Customer" : "You"}</span>
+        {isImageQuote ? (
+          <img src={msg.replyToText} alt="" className="quoted-thumb" />
+        ) : (
+          <span className="quoted-text">
+            {previewType === "image" ? "Photo" : previewType === "document" ? "Document" : msg.replyToText}
+          </span>
+        )}
+      </div>
+    );
+  };
 
   // Merge fetched messages with optimistic messages from state
   const messages = (() => {
@@ -99,9 +135,11 @@ const ChatWindow = () => {
     const msg = text || inputText;
     if (!msg.trim() || !query) return;
     setSending(true);
+    const replyTo = replyingTo ? buildReplyToPayload(replyingTo) : undefined;
     try {
-      await sendMessage(query.id, { text: msg, messageType: "text" });
+      await sendMessage(query.id, { text: msg, messageType: "text", replyTo });
       setInputText("");
+      setReplyingTo(null);
       setShowQuickReplies(false);
     } catch (err) {
       console.error("Direct send failed:", err);
@@ -115,16 +153,6 @@ const ChatWindow = () => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
 
-  const getMessageType = (msg) => {
-    if (msg?.messageType) return msg.messageType;
-    const text = (msg?.text || "").toLowerCase();
-    const isUrl = /^https?:\/\//.test(text);
-    if (!isUrl) return "text";
-    if (/\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(text)) return "image";
-    if (/\.(pdf|doc|docx|xls|xlsx|txt)(\?|$)/i.test(text)) return "document";
-    return "text";
-  };
-
   const handleAttachmentPick = async (e) => {
     const file = e.target.files?.[0];
     if (!file || !query) return;
@@ -133,12 +161,16 @@ const ChatWindow = () => {
       const uploadRes = await messagesAPI.uploadAttachment(file);
       const lowerType = (file.type || "").toLowerCase();
       const messageType = lowerType.startsWith("image/") ? "image" : "document";
+      const replyTo = replyingTo ? buildReplyToPayload(replyingTo) : undefined;
       await sendMessage(query.id, {
-        text: "",
+        text: inputText.trim(),
         messageType,
         attachmentUrl: uploadRes.attachmentUrl,
         fileName: uploadRes.fileName,
+        replyTo,
       });
+      setReplyingTo(null);
+      setInputText("");
     } catch (err) {
       alert(err.message || "Attachment upload failed");
     } finally {
@@ -279,9 +311,24 @@ const ChatWindow = () => {
               No messages yet. Start the conversation!
             </div>
           ) : messages.map((msg) => (
-            <div key={msg.id} className={`message-wrap ${msg.sender === "agent" ? "agent-msg" : "customer-msg"}`}>
+            <div
+              key={msg.id}
+              id={`msg-${msg.id}`}
+              className={`message-wrap ${msg.sender === "agent" ? "agent-msg" : "customer-msg"}`}
+            >
+              {canReply && (
+                <button
+                  type="button"
+                  className="message-reply-btn"
+                  title="Reply"
+                  onClick={() => setReplyingTo(msg)}
+                >
+                  <Reply size={14} />
+                </button>
+              )}
               {msg.sender === "agent" && <div className="agent-tag">{msg.agentName || currentUser?.name}</div>}
               <div className={`message-bubble ${msg.sender}`}>
+                {renderQuotedBlock(msg)}
                 {getMessageType(msg) === "image" ? (
                   <a href={msg.text} target="_blank" rel="noreferrer" className="attachment-image-link">
                     <img src={msg.text} alt="attachment" className="attachment-image" />
@@ -358,6 +405,20 @@ const ChatWindow = () => {
         </div>
       ) : query.status !== "resolved" ? (
         <div className="chat-input-area">
+          {replyingTo && (
+            <div className="reply-preview-bar">
+              <div className="reply-preview-accent" />
+              <div className="reply-preview-body">
+                <span className="reply-preview-label">
+                  Replying to {replyingTo.sender === "customer" ? query.name : "yourself"}
+                </span>
+                <span className="reply-preview-snippet">{getReplyPreviewText(replyingTo)}</span>
+              </div>
+              <button type="button" className="reply-preview-close" onClick={() => setReplyingTo(null)} aria-label="Cancel reply">
+                <X size={18} />
+              </button>
+            </div>
+          )}
           <div className="input-toolbar">
             <button className="toolbar-btn" onClick={() => setShowQuickReplies(!showQuickReplies)} title="Quick Replies">
               <Smile size={18} />
@@ -374,7 +435,13 @@ const ChatWindow = () => {
             />
           </div>
           <div className="input-wrap">
-            <textarea value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyDown={handleKeyDown} placeholder="Type a reply... (Enter to send)" rows={1} />
+            <textarea
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={replyingTo ? "Type your reply..." : "Type a reply... (Enter to send)"}
+              rows={1}
+            />
             <button className={`send-btn ${sending ? "sending" : ""}`} onClick={() => handleSend()} disabled={!inputText.trim() || uploading}>
               <Send size={16} />
             </button>

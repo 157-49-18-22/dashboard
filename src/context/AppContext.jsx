@@ -327,7 +327,18 @@ export const AppProvider = ({ children }) => {
     const time = new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
     const messageText = attachmentUrl || text;
     const previewText = messageType === "image" ? "[Image]" : messageType === "document" ? "[Document]" : messageText;
-    const newMsg = { id: Date.now(), sender: "agent", text: messageText, time, agentName: currentUser?.name, messageType };
+    const newMsg = {
+      id: Date.now(),
+      sender: "agent",
+      text: messageText,
+      time,
+      agentName: currentUser?.name,
+      messageType,
+      replyToMessageId: payload?.replyTo?.messageId || null,
+      replyToText: payload?.replyTo?.text || null,
+      replyToSender: payload?.replyTo?.sender || null,
+      replyToMessageType: payload?.replyTo?.messageType || null,
+    };
 
     // Optimistic update
     setQueries((prev) =>
