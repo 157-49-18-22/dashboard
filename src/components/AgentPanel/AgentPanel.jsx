@@ -162,19 +162,58 @@ const AgentPanel = () => {
       <div className="agent-panel-header">
         <div className="aph-left">
           <Users size={20} color="#1a202c" />
-          <h2>Logged-in Agents</h2>
+          <h2>Team Management</h2>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <span className="agent-count-badge">{onlineCount} Online</span>
           {canManageAgents && (
-            <button className="add-agent-btn" onClick={handleOpenModal}>
-              <UserPlus size={16} />
-              <span>Add Agent</span>
-            </button>
+            <>
+              <button 
+                className="add-agent-btn" 
+                style={{ background: '#f1f5f9', color: '#1e293b', border: '1px solid #e2e8f0' }}
+                onClick={() => { setGroupName(""); setGroupDesc(""); setGroupError(""); setGroupSuccess(""); setSelectedAgents([]); setAgentDropdownOpen(false); setShowGroupModal(true); }}
+              >
+                <Users size={14} />
+                <span>Create Group</span>
+              </button>
+              <button className="add-agent-btn" onClick={handleOpenModal}>
+                <UserPlus size={16} />
+                <span>Add Agent</span>
+              </button>
+            </>
           )}
         </div>
       </div>
 
+      {agentGroups.length > 0 && (
+        <>
+          <h3 style={{ fontSize: '14px', color: '#64748b', marginBottom: '12px', marginTop: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Team Groups</h3>
+          <div className="agents-grid" style={{ paddingBottom: '1rem' }}>
+             {agentGroups.map(group => (
+                <div key={group.id} className="agent-card online" style={{ minHeight: 'unset', paddingBottom: '16px' }}>
+                  <div className="agent-card-top" style={{ marginBottom: 0 }}>
+                     <div className="agent-info">
+                       <h3 style={{ fontSize: '15px' }}>{group.name}</h3>
+                       <div className="agent-email">{group.description || 'No description'}</div>
+                       <span className="agent-status-label" style={{ color: '#667eea', marginTop: '8px' }}>
+                         <Users size={14} style={{ marginRight: '4px' }} /> {group.agentCount || 0} Agents assigned
+                       </span>
+                     </div>
+                     {canManageAgents && (
+                       <div className="agent-card-actions">
+                         <button className="agent-action-btn delete-btn" onClick={() => handleDeleteGroup(group.id, group.name)} title="Delete Group">
+                           <Trash2 size={16} />
+                         </button>
+                       </div>
+                     )}
+                  </div>
+                </div>
+             ))}
+          </div>
+        </>
+      )}
+
+      <h3 style={{ fontSize: '14px', color: '#64748b', marginBottom: '12px', marginTop: agentGroups.length > 0 ? '1rem' : '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Individual Agents</h3>
       <div className="agents-grid">
         {agents.map((agent) => {
           const sc = statusConfig[agent.status] || statusConfig.offline;
@@ -255,46 +294,6 @@ const AgentPanel = () => {
             </div>
           );
         })}
-      </div>
-
-      <div className="agent-panel-header" style={{ marginTop: '2rem' }}>
-        <div className="aph-left">
-          <Users size={20} color="#1a202c" />
-          <h2>Agent Groups</h2>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <span className="agent-count-badge">{agentGroups.length} Groups</span>
-          {canManageAgents && (
-            <button className="add-agent-btn" onClick={() => { setGroupName(""); setGroupDesc(""); setGroupError(""); setGroupSuccess(""); setSelectedAgents([]); setAgentDropdownOpen(false); setShowGroupModal(true); }}>
-              <UserPlus size={16} />
-              <span>Create Group</span>
-            </button>
-          )}
-        </div>
-      </div>
-      
-      <div className="agents-grid" style={{ paddingBottom: '2rem' }}>
-         {agentGroups.length === 0 && <p style={{ color: '#64748b' }}>No groups created yet.</p>}
-         {agentGroups.map(group => (
-            <div key={group.id} className="agent-card online" style={{ minHeight: 'unset', paddingBottom: '16px' }}>
-              <div className="agent-card-top" style={{ marginBottom: 0 }}>
-                 <div className="agent-info">
-                   <h3>{group.name}</h3>
-                   <div className="agent-email">{group.description || 'No description'}</div>
-                   <span className="agent-status-label" style={{ color: '#667eea', marginTop: '8px' }}>
-                     <Users size={14} style={{ marginRight: '4px' }} /> {group.agentCount || 0} Agents assigned
-                   </span>
-                 </div>
-                 {canManageAgents && (
-                   <div className="agent-card-actions">
-                     <button className="agent-action-btn delete-btn" onClick={() => handleDeleteGroup(group.id, group.name)} title="Delete Group">
-                       <Trash2 size={16} />
-                     </button>
-                   </div>
-                 )}
-              </div>
-            </div>
-         ))}
       </div>
 
       {/* ── Add Agent Modal ── */}
