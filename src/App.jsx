@@ -37,7 +37,7 @@ const DashboardContent = ({ onLogout }) => {
         </div>
       )}
 
-      {activeTab === "pool" && (
+      {["pool", "department", "specific"].includes(activeTab) && (
         <div className="main-content full-view">
           <QueryPool />
         </div>

@@ -8,6 +8,8 @@ import "./Sidebar.css";
 const navItems = [
   { id: "queries", label: "Queries", icon: MessageSquare },
   { id: "pool", label: "Query Pool", icon: Inbox },
+  { id: "specific", label: "Specific Pool", icon: MessageSquare },
+  { id: "department", label: "Department Pool", icon: Inbox },
   { id: "agents", label: "Agents", icon: Users },
   { id: "sent", label: "Sent", icon: Send },
   { id: "activity", label: "Activity Log", icon: ClipboardList },
@@ -19,12 +21,13 @@ const Sidebar = ({ onLogout }) => {
   const { activeTab, setActiveTab, queries, currentUser, setCurrentUser, agents, newMessageAlert, soundEnabled, setSoundEnabled, playNotificationSound } = useApp();
   const openCount = queries.filter((q) => q.status === "open").length;
   
-  // Calculate unread count for queries assigned to the current agent
-  const myQueries = queries.filter((q) => q.assignedTo === currentUser?.id);
+  // Calculate unread count for actual accepted queries
+  const myQueries = queries.filter((q) => q.assignedTo === currentUser?.id && q.status !== "open");
   const myTotalUnread = myQueries.reduce((sum, q) => sum + q.unread, 0);
 
-  // Calculate unassigned queries count for the Query Pool
-  const poolCount = queries.filter((q) => !q.assignedTo && q.status !== "resolved").length;
+  const poolCount = queries.filter((q) => !q.assignedTo && !q.assignedToGroup && q.status !== "resolved").length;
+  const deptCount = queries.filter((q) => !q.assignedTo && q.assignedToGroup === currentUser?.groupId && q.status !== "resolved").length;
+  const specificCount = queries.filter((q) => q.assignedTo === currentUser?.id && q.status === "open").length;
 
   return (
     <aside className="sidebar">
@@ -72,13 +75,13 @@ const Sidebar = ({ onLogout }) => {
       <nav className="sidebar-nav">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isPoolActiveWithQueries = item.id === "pool" && poolCount > 0;
+          const isPulse = (item.id === "pool" && poolCount > 0) || (item.id === "department" && deptCount > 0) || (item.id === "specific" && specificCount > 0);
           return (
             <button
               key={item.id}
               className={`nav-item ${activeTab === item.id ? "active" : ""}`}
               onClick={() => setActiveTab(item.id)}
-              style={isPoolActiveWithQueries ? {
+              style={isPulse ? {
                 animation: 'heartbeat 1.5s infinite ease-in-out',
                 background: 'rgba(245, 158, 11, 0.08)',
                 borderLeft: '3px solid #f59e0b',
@@ -86,13 +89,19 @@ const Sidebar = ({ onLogout }) => {
                 fontWeight: '700'
               } : {}}
             >
-              <Icon size={18} className="nav-icon" style={isPoolActiveWithQueries ? { color: '#f59e0b' } : {}} />
+              <Icon size={18} className="nav-icon" style={isPulse ? { color: '#f59e0b' } : {}} />
               <span className="nav-label">{item.label}</span>
               {item.id === "queries" && myTotalUnread > 0 && (
                 <span className={`nav-badge ${newMessageAlert ? "pulse" : ""}`}>{myTotalUnread}</span>
               )}
               {item.id === "pool" && poolCount > 0 && (
                 <span className="nav-badge pool-badge" style={{ background: '#f59e0b', color: '#fff', boxShadow: '0 0 8px rgba(245, 158, 11, 0.6)' }}>{poolCount}</span>
+              )}
+              {item.id === "department" && deptCount > 0 && (
+                <span className="nav-badge pool-badge" style={{ background: '#f59e0b', color: '#fff', boxShadow: '0 0 8px rgba(245, 158, 11, 0.6)' }}>{deptCount}</span>
+              )}
+              {item.id === "specific" && specificCount > 0 && (
+                <span className="nav-badge pool-badge" style={{ background: '#f59e0b', color: '#fff', boxShadow: '0 0 8px rgba(245, 158, 11, 0.6)' }}>{specificCount}</span>
               )}
             </button>
           );

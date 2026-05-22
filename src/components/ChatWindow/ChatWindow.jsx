@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useApp } from "../../context/AppContext";
 import { 
-  ArrowLeft, CheckCircle, AlertCircle, Send, Smile, Phone, Tag, StickyNote, Search, Loader, User, Paperclip, FileText, Download, Reply, X
+  ArrowLeft, CheckCircle, AlertCircle, Send, Smile, Phone, Tag, StickyNote, Search, Loader, User, Paperclip, FileText, Download, Reply, X, Forward
 } from "lucide-react";
 import { messagesAPI } from "../../services/api";
 import { getMessageType, getReplyPreviewText, buildReplyToPayload } from "./messageUtils";
@@ -18,7 +18,7 @@ const quickReplies = [
 const ChatWindow = () => {
   const { 
     selectedQuery, queries, sendMessage, resolveQuery, setSelectedQuery, 
-    currentUser, backendOnline, assignQuery, setActiveTab, agents 
+    currentUser, backendOnline, assignQuery, setActiveTab, agents, agentGroups, transferQuery 
   } = useApp();
   
   const [inputText, setInputText] = useState("");
@@ -31,6 +31,11 @@ const ChatWindow = () => {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [fetchedMessages, setFetchedMessages] = useState([]);
   const [replyingTo, setReplyingTo] = useState(null);
+  
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [transferType, setTransferType] = useState("department");
+  const [transferTarget, setTransferTarget] = useState("");
+
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -291,9 +296,14 @@ const ChatWindow = () => {
             <Tag size={16} />
           </button>
           {query.status !== "resolved" && (
-            <button className="resolve-btn" onClick={() => resolveQuery(query.id)}>
-              <CheckCircle size={15} /> Resolve
-            </button>
+            <>
+              <button className="resolve-btn" style={{ background: '#f8fafc', color: '#0f172a', border: '1px solid #e2e8f0', marginRight: '4px' }} onClick={() => { setTransferType("department"); setTransferTarget(""); setShowTransferModal(true); }}>
+                 <Forward size={14} style={{ marginRight: '4px' }} /> Assign to Other
+              </button>
+              <button className="resolve-btn" onClick={() => resolveQuery(query.id)}>
+                <CheckCircle size={15} /> Resolve
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -450,6 +460,83 @@ const ChatWindow = () => {
         </div>
       ) : (
         <div className="resolved-banner"><CheckCircle size={16} /> This query has been resolved</div>
+      )}
+
+      {/* Transfer Modal */}
+      {showTransferModal && (
+        <div className="agent-modal-overlay" onClick={() => setShowTransferModal(false)} style={{ zIndex: 1000}}>
+          <div className="agent-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="agent-modal-header">
+              <div>
+                <h3>Transfer Query</h3>
+                <p>Assign this query to a different department or agent</p>
+              </div>
+              <button className="agent-modal-close" onClick={() => setShowTransferModal(false)}>
+                <X size={16} />
+              </button>
+            </div>
+            
+            <div className="agent-modal-body">
+              <div className="agent-form-group">
+                <label>Transfer Destination</label>
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                  <button 
+                     type="button"
+                     style={{ flex: 1, padding: '8px', borderRadius: '6px', border: transferType === 'department' ? '1px solid #667eea' : '1px solid #e2e8f0', background: transferType === 'department' ? '#ebf4ff' : '#fff', color: transferType === 'department' ? '#4c51bf' : '#64748b', cursor: 'pointer' }}
+                     onClick={() => { setTransferType("department"); setTransferTarget(""); }}
+                  >
+                     Department
+                  </button>
+                  <button 
+                     type="button"
+                     style={{ flex: 1, padding: '8px', borderRadius: '6px', border: transferType === 'specific' ? '1px solid #667eea' : '1px solid #e2e8f0', background: transferType === 'specific' ? '#ebf4ff' : '#fff', color: transferType === 'specific' ? '#4c51bf' : '#64748b', cursor: 'pointer' }}
+                     onClick={() => { setTransferType("specific"); setTransferTarget(""); }}
+                  >
+                     Specific Agent
+                  </button>
+                </div>
+              </div>
+
+              {transferType === "department" && (
+                 <div className="agent-form-group">
+                   <label>Select Department</label>
+                   <select className="agent-switcher" style={{ width: '100%', padding: '10px', marginTop: '4px', border: '1px solid #e2e8f0', borderRadius: '6px' }} value={transferTarget} onChange={(e) => setTransferTarget(e.target.value)}>
+                     <option value="">Select a Group...</option>
+                     {agentGroups.map(g => (
+                       <option key={g.id} value={g.id}>{g.name}</option>
+                     ))}
+                   </select>
+                 </div>
+              )}
+
+              {transferType === "specific" && (
+                 <div className="agent-form-group">
+                   <label>Select Agent</label>
+                   <select className="agent-switcher" style={{ width: '100%', padding: '10px', marginTop: '4px', border: '1px solid #e2e8f0', borderRadius: '6px' }} value={transferTarget} onChange={(e) => setTransferTarget(e.target.value)}>
+                     <option value="">Select an Agent...</option>
+                     {agents.map(a => (
+                       <option key={a.id} value={a.id}>{a.name} ({a.role})</option>
+                     ))}
+                   </select>
+                 </div>
+              )}
+            </div>
+
+            <div className="agent-modal-footer">
+               <button type="button" className="agent-btn-cancel" onClick={() => setShowTransferModal(false)}>Cancel</button>
+               <button type="button" className="agent-btn-submit" disabled={!transferTarget} onClick={() => {
+                  if (transferType === "department") {
+                     transferQuery(query.id, transferTarget, null);
+                  } else {
+                     transferQuery(query.id, null, transferTarget);
+                  }
+                  setShowTransferModal(false);
+               }}>
+                 Transfer Query
+               </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

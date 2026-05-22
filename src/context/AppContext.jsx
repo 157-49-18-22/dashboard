@@ -533,6 +533,39 @@ export const AppProvider = ({ children }) => {
     }
   }, [currentUser, queries, backendOnline]);
 
+  const transferQuery = useCallback(async (queryId, targetGroupId, targetAgentId) => {
+    const q = queries.find((q) => q.id === queryId);
+    if (!q) return;
+    const time = new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+
+    if (targetGroupId) {
+      setQueries((prev) =>
+        prev.map((val) =>
+          val.id === queryId ? { ...val, assignedToGroup: targetGroupId, assignedTo: null, status: "open" } : val
+        )
+      );
+      setActivityLogs((prev) => [{
+        id: Date.now(), agentId: currentUser?.id, agentName: currentUser?.name,
+        action: "Transferred to group", customer: q?.name || "Unknown",
+        time, type: "assigned", date: new Date().toISOString().split("T")[0],
+      }, ...prev]);
+      if (backendOnline) queriesAPI.assign(queryId, null, targetGroupId).catch(console.error);
+    } else if (targetAgentId) {
+      setQueries((prev) =>
+        prev.map((val) =>
+          val.id === queryId ? { ...val, assignedTo: targetAgentId, assignedToGroup: null, status: "open", unread: 1 } : val
+        )
+      );
+      setActivityLogs((prev) => [{
+        id: Date.now(), agentId: currentUser?.id, agentName: currentUser?.name,
+        action: "Transferred to agent", customer: q?.name || "Unknown",
+        time, type: "assigned", date: new Date().toISOString().split("T")[0],
+      }, ...prev]);
+      if (backendOnline) queriesAPI.assign(queryId, targetAgentId, null, "open").catch(console.error);
+    }
+    setSelectedQuery(null);
+  }, [queries, backendOnline, currentUser]);
+
   const getFilteredQueries = useCallback(() => {
     const role = currentUser?.role?.toLowerCase() || "";
     const isAdmin = role.includes("admin") || role.includes("senior");
@@ -540,13 +573,16 @@ export const AppProvider = ({ children }) => {
     // 1. Filter based on activeTab
     let visible = [];
     if (activeTab === "pool") {
-      // In the Query Pool, show only UNASSIGNED queries (assignedTo is null/undefined)
-      visible = queries.filter((q) => !q.assignedTo && q.status !== "resolved");
+      visible = queries.filter((q) => !q.assignedTo && !q.assignedToGroup && q.status !== "resolved");
+    } else if (activeTab === "department") {
+      const gId = currentUser?.groupId;
+      visible = queries.filter((q) => !q.assignedTo && q.assignedToGroup === gId && q.status !== "resolved");
+    } else if (activeTab === "specific") {
+      visible = queries.filter((q) => q.assignedTo === currentUser?.id && q.status === "open");
     } else if (activeTab === "queries") {
-      // In normal Queries, show queries assigned to the logged-in agent (admins see all assigned queries)
       visible = isAdmin
-        ? queries.filter((q) => q.assignedTo)
-        : queries.filter((q) => q.assignedTo === currentUser?.id);
+        ? queries.filter((q) => q.assignedTo && q.status !== "open" && q.status !== "resolved")
+        : queries.filter((q) => q.assignedTo === currentUser?.id && q.status !== "open" && q.status !== "resolved");
     } else {
       visible = queries;
     }
@@ -683,6 +719,7 @@ export const AppProvider = ({ children }) => {
       getFilteredQueries,
       currentUser, setCurrentUser,
       backendOnline,
+      transferQuery,
       loading,
       login,
       createAgent,

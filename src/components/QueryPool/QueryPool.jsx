@@ -17,7 +17,7 @@ const getTimerLabel = (isoString) => {
 };
 
 const QueryPool = () => {
-  const { queries, assignQuery, setActiveTab, setSelectedQuery, currentUser, agentGroups } = useApp();
+  const { queries, assignQuery, activeTab, setActiveTab, setSelectedQuery, currentUser, agentGroups } = useApp();
   const [expandedQueries, setExpandedQueries] = useState({});
 
   const toggleExpand = (queryId) => {
@@ -33,10 +33,17 @@ const QueryPool = () => {
   // Filter, flag, and sort unassigned queries (escalated queries at the top, sorted by oldest first)
   const poolQueries = queries
     .filter((q) => {
-      if (q.assignedTo || q.status === "resolved") return false;
-      // Filter out queries meant for other groups (unless admin)
-      if (q.assignedToGroup && !canManageAgents && q.assignedToGroup !== currentUser?.groupId) return false;
-      return true;
+      if (q.status === "resolved") return false;
+      
+      if (activeTab === "pool") {
+        return !q.assignedTo && !q.assignedToGroup;
+      } else if (activeTab === "department") {
+        // Only show queries assigned to the exact group the current user is in
+        return !q.assignedTo && q.assignedToGroup === currentUser?.groupId;
+      } else if (activeTab === "specific") {
+        return q.assignedTo === currentUser?.id && q.status === "open";
+      }
+      return false;
     })
     .map((q) => {
       const diffMs = Date.now() - new Date(q.time).getTime();
@@ -70,7 +77,11 @@ const QueryPool = () => {
             <Inbox size={22} className="pool-header-icon" />
           </div>
           <div>
-            <h2>Open Query Pool</h2>
+            <h2>
+              {activeTab === 'pool' && 'Open Query Pool'}
+              {activeTab === 'department' && 'Department Pool'}
+              {activeTab === 'specific' && 'Specific Pool'}
+            </h2>
             <p>Claim incoming customer queries to start replying</p>
           </div>
         </div>
@@ -179,7 +190,7 @@ const QueryPool = () => {
                     </td>
                     <td className="text-right">
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px' }}>
-                        {canManageAgents && agentGroups.length > 0 && !query.assignedToGroup && (
+                        {canManageAgents && agentGroups.length > 0 && activeTab !== 'department' && activeTab !== 'specific' && (
                            <select 
                              className="group-assign-select"
                              style={{ padding: '6px 8px', borderRadius: '6px', fontSize: '11px', border: '1px solid #e2e8f0', background: '#f8fafc', color: '#475569', cursor: 'pointer', maxWidth: '120px' }}

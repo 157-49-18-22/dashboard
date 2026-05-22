@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useApp } from "../../context/AppContext";
 import { 
   Users, Circle, MessageSquare, CheckCircle, Clock, 
@@ -47,6 +47,26 @@ const AgentPanel = () => {
   const [resetError, setResetError] = useState("");
   const [resetSuccess, setResetSuccess] = useState("");
   const [isResetSubmitting, setIsResetSubmitting] = useState(false);
+
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setAgentDropdownOpen(false);
+      }
+    };
+
+    if (agentDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [agentDropdownOpen]);
 
   const onlineCount = agents.filter(a => a.status === "online").length;
 
@@ -296,9 +316,41 @@ const AgentPanel = () => {
         })}
       </div>
 
+
+      {agentGroups.length > 0 && (
+        <>
+          <h3 style={{ fontSize: '14px', color: '#64748b', marginBottom: '12px', marginTop: '2rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Group Information & Breakdown</h3>
+          <div className="group-breakdown-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px', paddingBottom: '2rem' }}>
+            {agentGroups.map(group => {
+              const groupAgents = agents.filter(a => a.groupId === group.id);
+              return (
+                <div key={`breakdown-${group.id}`} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                  <h4 style={{ margin: '0 0 4px 0', color: '#1e293b', fontSize: '15px' }}>{group.name}</h4>
+                  <p style={{ margin: '0 0 16px 0', color: '#64748b', fontSize: '12px' }}>{groupAgents.length} Agents Assigned — {group.description || 'No description provided.'}</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {groupAgents.map(a => (
+                      <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #f1f5f9' }}>
+                        <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 'bold', color: '#475569' }}>{a.avatar}</div>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontSize: '13px', fontWeight: '500', color: '#334155' }}>{a.name}</span>
+                          <span style={{ fontSize: '11px', color: '#94a3b8' }}>{a.role}</span>
+                        </div>
+                      </div>
+                    ))}
+                    {groupAgents.length === 0 && (
+                      <div style={{ padding: '8px', fontSize: '12px', color: '#94a3b8', fontStyle: 'italic', textAlign: 'center', background: '#f8fafc', borderRadius: '8px' }}>No agents in this group</div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+
       {/* ── Add Agent Modal ── */}
       {showModal && (
-        <div className="agent-modal-overlay" onClick={handleCloseModal}>
+        <div className="agent-modal-overlay">
           <div className="agent-modal" onClick={(e) => e.stopPropagation()}>
             <div className="agent-modal-header">
               <div>
@@ -401,7 +453,7 @@ const AgentPanel = () => {
 
       {/* ── Add Group Modal ── */}
       {showGroupModal && (
-        <div className="agent-modal-overlay" onClick={() => setShowGroupModal(false)}>
+        <div className="agent-modal-overlay">
           <div className="agent-modal" onClick={(e) => e.stopPropagation()}>
             <div className="agent-modal-header">
               <div>
@@ -450,7 +502,7 @@ const AgentPanel = () => {
                   </div>
                 </div>
 
-                <div className="agent-form-group" style={{ position: 'relative' }}>
+                <div className="agent-form-group" style={{ position: 'relative' }} ref={dropdownRef}>
                   <label>Assign Existing Agents</label>
                   <div 
                     className="agent-input-wrapper" 
@@ -470,33 +522,44 @@ const AgentPanel = () => {
                     <div style={{
                       position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10,
                       background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', 
-                      marginTop: '4px', maxHeight: '180px', overflowY: 'auto',
+                      marginTop: '4px',
                       boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
                     }}>
-                      {agents.map(a => (
-                        <label key={a.id} style={{ 
-                          display: 'flex', alignItems: 'center', padding: '10px 12px', 
-                          borderBottom: '1px solid #f1f5f9', cursor: 'pointer', margin: 0 
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f8fafc'}
-                        onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                      <div style={{ maxHeight: '150px', overflowY: 'auto' }}>
+                        {agents.map(a => (
+                          <label key={a.id} style={{ 
+                            display: 'flex', alignItems: 'center', padding: '10px 12px', 
+                            borderBottom: '1px solid #f1f5f9', cursor: 'pointer', margin: 0 
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                          onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                          >
+                            <input 
+                              type="checkbox" 
+                              style={{ marginRight: '12px', marginTop: '0', width: '16px', height: '16px', cursor: 'pointer' }}
+                              checked={selectedAgents.includes(a.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) setSelectedAgents(prev => [...prev, a.id]);
+                                else setSelectedAgents(prev => prev.filter(id => id !== a.id));
+                              }}
+                            />
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                              <span style={{ fontSize: '13px', color: '#1e293b', fontWeight: '500' }}>{a.name}</span>
+                              <span style={{ fontSize: '11px', color: '#64748b' }}>{a.role}</span>
+                            </div>
+                          </label>
+                        ))}
+                        {agents.length === 0 && <div style={{ padding: '12px', fontSize: '13px', color: '#64748b', textAlign: 'center' }}>No agents available</div>}
+                      </div>
+                      <div style={{ padding: '8px', borderTop: '1px solid #e2e8f0', background: '#f8fafc', borderBottomLeftRadius: '8px', borderBottomRightRadius: '8px' }}>
+                        <button 
+                          type="button" 
+                          onClick={(e) => { e.stopPropagation(); setAgentDropdownOpen(false); }}
+                          style={{ width: '100%', padding: '6px', background: '#667eea', color: '#fff', border: 'none', borderRadius: '4px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}
                         >
-                          <input 
-                            type="checkbox" 
-                            style={{ marginRight: '12px', marginTop: '0', width: '16px', height: '16px', cursor: 'pointer' }}
-                            checked={selectedAgents.includes(a.id)}
-                            onChange={(e) => {
-                              if (e.target.checked) setSelectedAgents(prev => [...prev, a.id]);
-                              else setSelectedAgents(prev => prev.filter(id => id !== a.id));
-                            }}
-                          />
-                          <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            <span style={{ fontSize: '13px', color: '#1e293b', fontWeight: '500' }}>{a.name}</span>
-                            <span style={{ fontSize: '11px', color: '#64748b' }}>{a.role}</span>
-                          </div>
-                        </label>
-                      ))}
-                      {agents.length === 0 && <div style={{ padding: '12px', fontSize: '13px', color: '#64748b', textAlign: 'center' }}>No agents available</div>}
+                          OK, Done
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -517,7 +580,7 @@ const AgentPanel = () => {
 
       {/* ── Reset Password Modal ── */}
       {showResetModal && selectedAgentForReset && (
-        <div className="agent-modal-overlay" onClick={handleCloseReset}>
+        <div className="agent-modal-overlay">
           <div className="agent-modal" onClick={(e) => e.stopPropagation()}>
             <div className="agent-modal-header reset-header">
               <div>

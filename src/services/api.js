@@ -66,7 +66,7 @@ export const queriesAPI = {
   },
   getById: (id) => request(`/queries/${id}`),
   create: (body) => request("/queries", { method: "POST", body: JSON.stringify(body) }),
-  assign: (id, agentId, groupId) => request(`/queries/${id}/assign`, { method: "PATCH", body: JSON.stringify({ agentId, groupId }) }),
+  assign: (id, agentId, groupId, status) => request(`/queries/${id}/assign`, { method: "PATCH", body: JSON.stringify({ agentId, groupId, status }) }),
   resolve: (id) => request(`/queries/${id}/resolve`, { method: "PATCH" }),
   markRead: (id) => request(`/queries/${id}/read`, { method: "PATCH" }),
   delete: (id) => request(`/queries/${id}`, { method: "DELETE" }),
