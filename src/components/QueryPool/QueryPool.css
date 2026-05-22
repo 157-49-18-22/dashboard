@@ -304,3 +304,208 @@
     display: none; /* Hide message preview and time on mobile view */
   }
 }
+
+/* ── Escalated Query Pool Highlight ──────────────────────────── */
+@keyframes escalated-pulse {
+  0% { box-shadow: 0 2px 6px rgba(239, 68, 68, 0.05); }
+  50% { box-shadow: 0 0 14px rgba(239, 68, 68, 0.25); }
+  100% { box-shadow: 0 2px 6px rgba(239, 68, 68, 0.05); }
+}
+
+.pool-row.pool-row-escalated {
+  background: linear-gradient(90deg, #fff5f5, #ffffff);
+  animation: escalated-pulse 2.5s infinite ease-in-out;
+}
+
+.pool-row.pool-row-escalated td {
+  background: linear-gradient(90deg, #fff5f5, #ffffff) !important;
+  border-top: 1px solid #fca5a5 !important;
+  border-bottom: 1px solid #fca5a5 !important;
+}
+
+.pool-row.pool-row-escalated td:first-child {
+  border-left: 4px solid #ef4444 !important;
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+}
+
+.pool-row.pool-row-escalated td:last-child {
+  border-right: 1px solid #fca5a5 !important;
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+/* Hover state for escalated row */
+.pool-row.pool-row-escalated:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(239, 68, 68, 0.12);
+  background: linear-gradient(90deg, #fee2e2, #fafafb) !important;
+}
+
+.pool-row.pool-row-escalated:hover td {
+  background: linear-gradient(90deg, #fee2e2, #fafafb) !important;
+  border-color: #ef4444 !important;
+}
+
+/* Escalated tag styling */
+.escalation-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 3px 7px;
+  border-radius: 4px;
+  margin-top: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  animation: pulse-red 1.5s infinite ease-in-out;
+  width: fit-content;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3);
+}
+
+@keyframes pulse-red {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.04); opacity: 0.85; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ── Mini Chat Thread inside Table ───────────────────────────── */
+.mini-chat-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 250px;
+  overflow: hidden;
+  text-align: left;
+}
+
+.thread-header {
+  font-size: 10px;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px dashed #cbd5e1;
+  padding-bottom: 4px;
+}
+
+.thread-bubbles {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  max-height: 180px;
+  padding-right: 4px;
+}
+
+/* Scrollbar styling for mini chat */
+.thread-bubbles::-webkit-scrollbar {
+  width: 4px;
+}
+.thread-bubbles::-webkit-scrollbar-track {
+  background: transparent;
+}
+.thread-bubbles::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.mini-bubble-wrap {
+  display: flex;
+  width: 100%;
+}
+
+.mini-bubble-wrap.customer {
+  justify-content: flex-start;
+}
+
+.mini-bubble-wrap.agent {
+  justify-content: flex-end;
+}
+
+.mini-bubble {
+  max-width: 85%;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.35;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mini-bubble-wrap.customer .mini-bubble {
+  background: #e2e8f0;
+  color: #1e293b;
+  border-top-left-radius: 2px;
+}
+
+.mini-bubble-wrap.agent .mini-bubble {
+  background: #10b981;
+  color: #ffffff;
+  border-top-right-radius: 2px;
+}
+
+.mini-bubble p {
+  margin: 0 !important;
+  word-break: break-word;
+  white-space: pre-wrap;
+  text-align: left;
+}
+
+.mini-time {
+  font-size: 9px;
+  align-self: flex-end;
+  opacity: 0.7;
+}
+
+.mini-bubble-wrap.customer .mini-time {
+  color: #64748b;
+}
+
+.mini-bubble-wrap.agent .mini-time {
+  color: #e6fbf4;
+}
+
+.preview-collapsed {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.preview-collapsed p {
+  margin: 0 !important;
+}
+
+.toggle-history-btn {
+  background: transparent;
+  border: none;
+  color: #2563eb;
+  font-size: 11px;
+  font-weight: 750;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 0;
+  width: fit-content;
+  transition: color 0.15s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+.toggle-history-btn:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+.toggle-history-btn.collapse {
+  margin-top: 2px;
+  color: #64748b;
+}
+.toggle-history-btn.collapse:hover {
+  color: #475569;
+}

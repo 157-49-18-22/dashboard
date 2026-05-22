@@ -81,6 +81,66 @@ export const AppProvider = ({ children }) => {
     }
   }, []);
 
+  const playAggressiveAlarmSound = useCallback(() => {
+    if (!soundEnabledRef.current) return;
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = new AudioContext();
+      const now = ctx.currentTime;
+
+      // Helper to synthesize a highly sharp and attention-grabbing buzzer beep
+      const playBeep = (startTime, duration, freq) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        
+        // Square wave produces highly resonant industrial/mechanical harmonic buzzer tone
+        osc.type = "square";
+        osc.frequency.setValueAtTime(freq, startTime);
+        
+        // Add rapid vibrato/frequency shift to sound extremely alarming
+        osc.frequency.linearRampToValueAtTime(freq + 150, startTime + duration / 2);
+        osc.frequency.linearRampToValueAtTime(freq - 50, startTime + duration);
+
+        gain.gain.setValueAtTime(0.0, startTime);
+        gain.gain.linearRampToValueAtTime(0.18, startTime + 0.01); // ultra-fast attack
+        gain.gain.setValueAtTime(0.18, startTime + duration - 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration); // clean decay
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+      };
+
+      // 3 highly urgent, piercing buzzer pulses (BEEP BEEP BEEP!)
+      playBeep(now, 0.14, 880);         // Beep 1
+      playBeep(now + 0.22, 0.14, 880);  // Beep 2
+      playBeep(now + 0.44, 0.24, 880);  // Beep 3 (longer holding tone)
+
+    } catch (err) {
+      console.warn("Could not play aggressive alarm sound via Web Audio Synth:", err);
+    }
+  }, []);
+
+  // Background check for critically delayed queries in the pool (unassigned, status != resolved, waiting >= 5m)
+  useEffect(() => {
+    const checkInterval = setInterval(() => {
+      const hasEscalated = queriesRef.current.some(q => {
+        if (q.assignedTo || q.status === "resolved") return false;
+        const diffMs = Date.now() - new Date(q.time).getTime();
+        return diffMs >= 5 * 60000;
+      });
+
+      if (hasEscalated && soundEnabledRef.current) {
+        playAggressiveAlarmSound();
+      }
+    }, 4000);
+
+    return () => clearInterval(checkInterval);
+  }, [playAggressiveAlarmSound]);
+
   // ── Load data from backend or fallback to mock ─────────────
   useEffect(() => {
     const init = async () => {
@@ -563,6 +623,7 @@ export const AppProvider = ({ children }) => {
       newMessageAlert,
       soundEnabled, setSoundEnabled,
       playNotificationSound,
+      playAggressiveAlarmSound,
       sendMessage, resolveQuery, assignQuery,
       getFilteredQueries,
       currentUser, setCurrentUser,
