@@ -66,7 +66,7 @@ export const queriesAPI = {
   },
   getById: (id) => request(`/queries/${id}`),
   create: (body) => request("/queries", { method: "POST", body: JSON.stringify(body) }),
-  assign: (id, agentId) => request(`/queries/${id}/assign`, { method: "PATCH", body: JSON.stringify({ agentId }) }),
+  assign: (id, agentId, groupId) => request(`/queries/${id}/assign`, { method: "PATCH", body: JSON.stringify({ agentId, groupId }) }),
   resolve: (id) => request(`/queries/${id}/resolve`, { method: "PATCH" }),
   markRead: (id) => request(`/queries/${id}/read`, { method: "PATCH" }),
   delete: (id) => request(`/queries/${id}`, { method: "DELETE" }),
@@ -138,6 +138,13 @@ export const reportsAPI = {
   getAgentPerformance: (date) => request(`/reports/agents${date ? `?date=${date}` : ""}`),
   getTimeline: (days = 7) => request(`/reports/timeline?days=${days}`),
   getPriorityBreakdown: () => request("/reports/priority"),
+};
+
+// ── Groups ─────────────────────────────────────────────────────
+export const groupsAPI = {
+  getAll: () => request("/groups"),
+  create: (body) => request("/groups", { method: "POST", body: JSON.stringify(body) }),
+  delete: (id) => request(`/groups/${id}`, { method: "DELETE" }),
 };
 
 export { getToken, setToken, clearToken };

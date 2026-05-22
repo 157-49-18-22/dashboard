@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
-import { queriesAPI, messagesAPI, agentsAPI, activityAPI } from "../services/api";
+import { queriesAPI, messagesAPI, agentsAPI, activityAPI, groupsAPI } from "../services/api";
 import { connectSocket, disconnectSocket, joinQueryRoom, leaveQueryRoom } from "../services/socket";
 
 const AppContext = createContext();
@@ -13,6 +13,7 @@ import { mockQueries, mockAgents, mockActivityLogs } from "../data/mockData";
 export const AppProvider = ({ children }) => {
   const [queries, setQueries]           = useState([]);
   const [agents, setAgents]             = useState([]);
+  const [agentGroups, setAgentGroups]   = useState([]);
   const [activityLogs, setActivityLogs] = useState([]);
   const [currentUser, setCurrentUser]   = useState(null);
   const [selectedQuery, setSelectedQuery] = useState(null);
@@ -149,14 +150,16 @@ export const AppProvider = ({ children }) => {
 
         if (token) {
           // Fetch real data from backend
-          const [qRes, aRes, logRes] = await Promise.all([
+          const [qRes, aRes, logRes, gpRes] = await Promise.all([
             queriesAPI.getAll({ limit: 50 }),
             agentsAPI.getAll(),
             activityAPI.getAll({ limit: 50 }),
+            groupsAPI.getAll().catch(() => ({ data: [] })),
           ]);
           setQueries(qRes.data || []);
           setAgents(aRes.agents || []);
           setActivityLogs(logRes.data || []);
+          setAgentGroups(gpRes.data || []);
           setBackendOnline(true);
 
           // Set current user from stored agent info
@@ -493,22 +496,40 @@ export const AppProvider = ({ children }) => {
     }
   }, [currentUser, queries, backendOnline]);
 
-  const assignQuery = useCallback(async (queryId) => {
+  const assignQuery = useCallback(async (queryId, assignGroupId = null) => {
     const q = queries.find((q) => q.id === queryId);
-    setQueries((prev) =>
-      prev.map((q) =>
-        q.id === queryId ? { ...q, assignedTo: currentUser?.id, status: "in_progress", unread: 0 } : q
-      )
-    );
     const time = new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
-    setActivityLogs((prev) => [{
-      id: Date.now(), agentId: currentUser?.id, agentName: currentUser?.name,
-      action: "Assigned to self", customer: q?.name || "Unknown",
-      time, type: "assigned", date: new Date().toISOString().split("T")[0],
-    }, ...prev]);
 
-    if (backendOnline) {
-      try { await queriesAPI.assign(queryId, currentUser?.id); } catch (err) { console.error(err.message); }
+    if (assignGroupId) {
+      setQueries((prev) =>
+        prev.map((q) =>
+          q.id === queryId ? { ...q, assignedToGroup: assignGroupId, assignedTo: null, status: "open" } : q
+        )
+      );
+      setActivityLogs((prev) => [{
+        id: Date.now(), agentId: currentUser?.id, agentName: currentUser?.name,
+        action: "Assigned to group", customer: q?.name || "Unknown",
+        time, type: "assigned", date: new Date().toISOString().split("T")[0],
+      }, ...prev]);
+
+      if (backendOnline) {
+        try { await queriesAPI.assign(queryId, null, assignGroupId); } catch (err) { console.error(err.message); }
+      }
+    } else {
+      setQueries((prev) =>
+        prev.map((q) =>
+          q.id === queryId ? { ...q, assignedTo: currentUser?.id, assignedToGroup: null, status: "in_progress", unread: 0 } : q
+        )
+      );
+      setActivityLogs((prev) => [{
+        id: Date.now(), agentId: currentUser?.id, agentName: currentUser?.name,
+        action: "Assigned to self", customer: q?.name || "Unknown",
+        time, type: "assigned", date: new Date().toISOString().split("T")[0],
+      }, ...prev]);
+
+      if (backendOnline) {
+        try { await queriesAPI.assign(queryId, currentUser?.id, null); } catch (err) { console.error(err.message); }
+      }
     }
   }, [currentUser, queries, backendOnline]);
 
@@ -599,8 +620,42 @@ export const AppProvider = ({ children }) => {
       if (res.success) return res;
       throw new Error(res.message || "Failed to reset password");
     } else {
-      // Mock mode — just return success (no real auth in mock)
       return { success: true, message: "Password reset successfully (mock mode)" };
+    }
+  }, [backendOnline]);
+
+  const createGroup = useCallback(async (groupData) => {
+    if (backendOnline) {
+      const res = await groupsAPI.create(groupData);
+      if (res.success) {
+        setAgentGroups(prev => [...prev, { ...res.data, agentCount: (groupData.agentIds || []).length }]);
+        if (groupData.agentIds && groupData.agentIds.length > 0) {
+           setAgents(prev => prev.map(a => groupData.agentIds.includes(a.id) ? { ...a, groupId: res.data.id } : a));
+        }
+        return res.data;
+      }
+      throw new Error(res.message);
+    } else {
+      const mockNewGroup = { id: `group_${Date.now()}`, ...groupData, agentCount: (groupData.agentIds || []).length };
+      if (groupData.agentIds && groupData.agentIds.length > 0) {
+         setAgents(prev => prev.map(a => groupData.agentIds.includes(a.id) ? { ...a, groupId: mockNewGroup.id } : a));
+      }
+      setAgentGroups(prev => [...prev, mockNewGroup]);
+      return mockNewGroup;
+    }
+  }, [backendOnline]);
+
+  const deleteGroup = useCallback(async (groupId) => {
+    if (backendOnline) {
+      const res = await groupsAPI.delete(groupId);
+      if (res.success) {
+        setAgentGroups(prev => prev.filter(g => g.id !== groupId));
+        return true;
+      }
+      throw new Error(res.message);
+    } else {
+      setAgentGroups(prev => prev.filter(g => g.id !== groupId));
+      return true;
     }
   }, [backendOnline]);
 
@@ -633,6 +688,9 @@ export const AppProvider = ({ children }) => {
       createAgent,
       deleteAgent,
       resetAgentPassword,
+      agentGroups,
+      createGroup,
+      deleteGroup,
     }}>
       {children}
     </AppContext.Provider>

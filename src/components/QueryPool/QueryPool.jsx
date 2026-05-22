@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useApp } from "../../context/AppContext";
-import { Inbox, UserPlus, Clock, Sparkles, AlertTriangle, MessageSquare, ChevronDown, ChevronUp } from "lucide-react";
+import { Inbox, UserPlus, Clock, Sparkles, AlertTriangle, MessageSquare, ChevronDown, ChevronUp, Users } from "lucide-react";
 import "./QueryPool.css";
 
 const priorityConfig = {
@@ -17,7 +17,7 @@ const getTimerLabel = (isoString) => {
 };
 
 const QueryPool = () => {
-  const { queries, assignQuery, setActiveTab, setSelectedQuery } = useApp();
+  const { queries, assignQuery, setActiveTab, setSelectedQuery, currentUser, agentGroups } = useApp();
   const [expandedQueries, setExpandedQueries] = useState({});
 
   const toggleExpand = (queryId) => {
@@ -27,9 +27,17 @@ const QueryPool = () => {
     }));
   };
 
+  const canManageAgents = currentUser?.role?.toLowerCase()?.includes("admin") || 
+                          currentUser?.role?.toLowerCase()?.includes("senior");
+
   // Filter, flag, and sort unassigned queries (escalated queries at the top, sorted by oldest first)
   const poolQueries = queries
-    .filter((q) => !q.assignedTo && q.status !== "resolved")
+    .filter((q) => {
+      if (q.assignedTo || q.status === "resolved") return false;
+      // Filter out queries meant for other groups (unless admin)
+      if (q.assignedToGroup && !canManageAgents && q.assignedToGroup !== currentUser?.groupId) return false;
+      return true;
+    })
     .map((q) => {
       const diffMs = Date.now() - new Date(q.time).getTime();
       const isEscalated = diffMs >= 5 * 60000;
@@ -47,6 +55,11 @@ const QueryPool = () => {
     assignQuery(query.id);
     setSelectedQuery(query);
     setActiveTab("queries");
+  };
+
+  const handleAssignGroup = (queryId, groupId) => {
+    if (!groupId) return;
+    assignQuery(queryId, groupId);
   };
 
   return (
@@ -83,13 +96,15 @@ const QueryPool = () => {
                 <th>Last Message</th>
                 <th style={{ width: "130px" }}>Waiting Time</th>
                 <th style={{ width: "150px" }}>Priority</th>
-                <th style={{ width: "130px" }} className="text-right">Action</th>
+                <th style={{ width: "240px" }} className="text-right">Action</th>
               </tr>
             </thead>
             <tbody>
               {poolQueries.map((query) => {
                 const pc = priorityConfig[query.priority || "medium"];
                 const isExpanded = !!expandedQueries[query.id];
+                const poolGroup = query.assignedToGroup ? agentGroups.find(g => g.id === query.assignedToGroup) : null;
+
                 return (
                   <tr key={query.id} className={`pool-row ${query.isEscalated ? "pool-row-escalated" : ""}`}>
                     <td>
@@ -98,6 +113,11 @@ const QueryPool = () => {
                         <div>
                           <h4 className="customer-name">{query.name}</h4>
                           <span className="customer-phone">{query.from}</span>
+                          {poolGroup && (
+                            <span className="agent-role" style={{ marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <Users size={10} color="#667eea" /> {poolGroup.name}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -158,9 +178,24 @@ const QueryPool = () => {
                       </span>
                     </td>
                     <td className="text-right">
-                      <button className="claim-btn-horizontal" onClick={() => handleAccept(query)}>
-                        <UserPlus size={14} /> Accept
-                      </button>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px' }}>
+                        {canManageAgents && agentGroups.length > 0 && !query.assignedToGroup && (
+                           <select 
+                             className="group-assign-select"
+                             style={{ padding: '6px 8px', borderRadius: '6px', fontSize: '11px', border: '1px solid #e2e8f0', background: '#f8fafc', color: '#475569', cursor: 'pointer', maxWidth: '120px' }}
+                             onChange={(e) => handleAssignGroup(query.id, e.target.value)}
+                             value=""
+                           >
+                             <option value="" disabled>Assign Group</option>
+                             {agentGroups.map(g => (
+                               <option key={g.id} value={g.id}>{g.name}</option>
+                             ))}
+                           </select>
+                        )}
+                        <button className="claim-btn-horizontal" onClick={() => handleAccept(query)}>
+                          <UserPlus size={14} /> Accept
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
