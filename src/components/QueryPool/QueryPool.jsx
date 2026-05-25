@@ -39,7 +39,7 @@ const QueryPool = () => {
         return !q.assignedTo && !q.assignedToGroup;
       } else if (activeTab === "department") {
         // Only show queries assigned to the exact group the current user is in
-        return !q.assignedTo && q.assignedToGroup === currentUser?.groupId;
+        return !q.assignedTo && q.assignedToGroup && q.assignedToGroup === currentUser?.groupId;
       } else if (activeTab === "specific") {
         return q.assignedTo === currentUser?.id && q.status === "open";
       }

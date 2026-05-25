@@ -26,7 +26,7 @@ const Sidebar = ({ onLogout }) => {
   const myTotalUnread = myQueries.reduce((sum, q) => sum + q.unread, 0);
 
   const poolCount = queries.filter((q) => !q.assignedTo && !q.assignedToGroup && q.status !== "resolved").length;
-  const deptCount = queries.filter((q) => !q.assignedTo && q.assignedToGroup === currentUser?.groupId && q.status !== "resolved").length;
+  const deptCount = queries.filter((q) => !q.assignedTo && q.assignedToGroup && q.assignedToGroup === currentUser?.groupId && q.status !== "resolved").length;
   const specificCount = queries.filter((q) => q.assignedTo === currentUser?.id && q.status === "open").length;
 
   return (

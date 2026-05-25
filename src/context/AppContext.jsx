@@ -592,7 +592,7 @@ export const AppProvider = ({ children }) => {
       visible = queries.filter((q) => !q.assignedTo && !q.assignedToGroup && q.status !== "resolved");
     } else if (activeTab === "department") {
       const gId = currentUser?.groupId;
-      visible = queries.filter((q) => !q.assignedTo && q.assignedToGroup === gId && q.status !== "resolved");
+      visible = queries.filter((q) => !q.assignedTo && q.assignedToGroup && q.assignedToGroup === gId && q.status !== "resolved");
     } else if (activeTab === "specific") {
       visible = queries.filter((q) => q.assignedTo === currentUser?.id && q.status === "open");
     } else if (activeTab === "queries") {
