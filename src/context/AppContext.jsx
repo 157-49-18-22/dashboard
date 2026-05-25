@@ -236,11 +236,22 @@ export const AppProvider = ({ children }) => {
       setQueries((prev) => {
         const exists = prev.find((q) => q.id === queryId);
         if (!exists && query) return [query, ...prev];
-        return prev.map((q) =>
-          q.id === queryId
-            ? { ...q, unread: (q.unread || 0) + 1, message: message?.text || q.message }
-            : q
-        );
+        
+        return prev.map((q) => {
+          if (q.id !== queryId) return q;
+          
+          const msgText = typeof message === 'string' ? message : (message?.text || q.message);
+          const history = q.messages || [];
+          // Avoid duplicate messages if both query:newIncoming and message:new fire (though unlikely for pool)
+          const alreadyExists = typeof message === 'object' && message?.id && history.some(m => m.id === message.id);
+          
+          return { 
+            ...q, 
+            unread: (q.unread || 0) + 1, 
+            message: msgText,
+            messages: alreadyExists ? history : [...history, typeof message === 'string' ? { text: message, sender: 'customer', time: new Date().toLocaleTimeString() } : message]
+          };
+        });
       });
       setNewMessageAlert(true);
       if (shouldPlaySound(queryId, query)) {
