@@ -44,19 +44,26 @@ const Sidebar = ({ onLogout }) => {
       <div className="sidebar-user">
         <div className="user-avatar">{currentUser?.avatar || "??"}</div>
         <div className="user-info">
-          <select 
-            className="agent-switcher" 
-            value={currentUser?.id || ""} 
-            onChange={(e) => {
-              const selected = agents.find(a => a.id === e.target.value);
-              if (selected) setCurrentUser(selected);
-            }}
-          >
-            {!currentUser && <option value="">Loading...</option>}
-            {agents.map(agent => (
-              <option key={agent.id} value={agent.id}>{agent.name}</option>
-            ))}
-          </select>
+          {/* Only Admin/Superadmin can switch accounts */}
+          {(currentUser?.role?.toLowerCase()?.includes("admin") || currentUser?.role?.toLowerCase()?.includes("superadmin")) ? (
+            <select
+              className="agent-switcher"
+              value={currentUser?.id || ""}
+              onChange={(e) => {
+                const selected = agents.find(a => a.id === e.target.value);
+                if (selected) setCurrentUser(selected);
+              }}
+            >
+              {!currentUser && <option value="">Loading...</option>}
+              {agents.map(agent => (
+                <option key={agent.id} value={agent.id}>{agent.name}</option>
+              ))}
+            </select>
+          ) : (
+            <span className="agent-switcher-locked" title="Only admins can switch accounts">
+              🔒 {currentUser?.name || "Agent"}
+            </span>
+          )}
           <p className="user-role">{currentUser?.role || "Agent"}</p>
         </div>
         <div className="user-status online"></div>

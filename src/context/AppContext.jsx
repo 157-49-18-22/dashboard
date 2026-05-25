@@ -10,6 +10,17 @@ const CHIME_WAV_BASE64 = "UklGRkZWAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YS
 // Fallback mock data (used when backend is offline)
 import { mockQueries, mockAgents, mockActivityLogs } from "../data/mockData";
 
+// Shared persistent AudioContext to avoid Chrome's AudioContext instance limit
+let sharedAudioCtx = null;
+const getAudioCtx = () => {
+  if (!sharedAudioCtx || sharedAudioCtx.state === 'closed') {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    sharedAudioCtx = new AC();
+  }
+  return sharedAudioCtx;
+};
+
 export const AppProvider = ({ children }) => {
   const [queries, setQueries]           = useState([]);
   const [agents, setAgents]             = useState([]);
@@ -39,6 +50,12 @@ export const AppProvider = ({ children }) => {
     queriesRef.current = queries;
   }, [queries]);
 
+  // Ref to keep the latest currentUser (prevent stale closures in interval)
+  const currentUserRef = useRef(null);
+  useEffect(() => {
+    currentUserRef.current = currentUser;
+  }, [currentUser]);
+
   // Helper to check if sound should play (simplified: always play if sound is enabled)
   const shouldPlaySound = useCallback(() => {
     return true;
@@ -47,36 +64,34 @@ export const AppProvider = ({ children }) => {
   const playNotificationSound = useCallback((forcePlay = false) => {
     if (!soundEnabledRef.current && !forcePlay) return;
     try {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContext) return;
-      const ctx = new AudioContext();
-      
-      const now = ctx.currentTime;
-      
-      // Chime 1: soft high bell (A5)
-      const osc1 = ctx.createOscillator();
-      const gain1 = ctx.createGain();
-      osc1.type = "sine";
-      osc1.frequency.setValueAtTime(880, now);
-      gain1.gain.setValueAtTime(0.12, now);
-      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-      osc1.connect(gain1);
-      gain1.connect(ctx.destination);
-      osc1.start(now);
-      osc1.stop(now + 0.25);
-      
-      // Chime 2: warm higher bell (C6) after 80ms
-      const osc2 = ctx.createOscillator();
-      const gain2 = ctx.createGain();
-      osc2.type = "sine";
-      osc2.frequency.setValueAtTime(1046.5, now + 0.08);
-      gain2.gain.setValueAtTime(0.12, now + 0.08);
-      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-      osc2.connect(gain2);
-      gain2.connect(ctx.destination);
-      osc2.start(now + 0.08);
-      osc2.stop(now + 0.35);
-      
+      const ctx = getAudioCtx();
+      if (!ctx) return;
+      const resume = ctx.state === 'suspended' ? ctx.resume() : Promise.resolve();
+      resume.then(() => {
+        const now = ctx.currentTime;
+        // Chime 1: soft high bell (A5)
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = "sine";
+        osc1.frequency.setValueAtTime(880, now);
+        gain1.gain.setValueAtTime(0.12, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.25);
+        // Chime 2: warm higher bell (C6) after 80ms
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = "sine";
+        osc2.frequency.setValueAtTime(1046.5, now + 0.08);
+        gain2.gain.setValueAtTime(0.12, now + 0.08);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.start(now + 0.08);
+        osc2.stop(now + 0.35);
+      }).catch(() => {});
     } catch (err) {
       console.warn("Could not play notification sound via Web Audio Synth:", err);
     }
@@ -85,53 +100,53 @@ export const AppProvider = ({ children }) => {
   const playAggressiveAlarmSound = useCallback(() => {
     if (!soundEnabledRef.current) return;
     try {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContext) return;
-      const ctx = new AudioContext();
-      const now = ctx.currentTime;
-
-      // Helper to synthesize a highly sharp and attention-grabbing buzzer beep
-      const playBeep = (startTime, duration, freq) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        
-        // Square wave produces highly resonant industrial/mechanical harmonic buzzer tone
-        osc.type = "square";
-        osc.frequency.setValueAtTime(freq, startTime);
-        
-        // Add rapid vibrato/frequency shift to sound extremely alarming
-        osc.frequency.linearRampToValueAtTime(freq + 150, startTime + duration / 2);
-        osc.frequency.linearRampToValueAtTime(freq - 50, startTime + duration);
-
-        gain.gain.setValueAtTime(0.0, startTime);
-        gain.gain.linearRampToValueAtTime(0.18, startTime + 0.01); // ultra-fast attack
-        gain.gain.setValueAtTime(0.18, startTime + duration - 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration); // clean decay
-
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        
-        osc.start(startTime);
-        osc.stop(startTime + duration);
-      };
-
-      // 3 highly urgent, piercing buzzer pulses (BEEP BEEP BEEP!)
-      playBeep(now, 0.14, 880);         // Beep 1
-      playBeep(now + 0.22, 0.14, 880);  // Beep 2
-      playBeep(now + 0.44, 0.24, 880);  // Beep 3 (longer holding tone)
-
+      const ctx = getAudioCtx();
+      if (!ctx) return;
+      const resume = ctx.state === 'suspended' ? ctx.resume() : Promise.resolve();
+      resume.then(() => {
+        const now = ctx.currentTime;
+        const playBeep = (startTime, duration, freq) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "square";
+          osc.frequency.setValueAtTime(freq, startTime);
+          osc.frequency.linearRampToValueAtTime(freq + 150, startTime + duration / 2);
+          osc.frequency.linearRampToValueAtTime(freq - 50, startTime + duration);
+          gain.gain.setValueAtTime(0.0, startTime);
+          gain.gain.linearRampToValueAtTime(0.18, startTime + 0.01);
+          gain.gain.setValueAtTime(0.18, startTime + duration - 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(startTime);
+          osc.stop(startTime + duration);
+        };
+        // 3 urgent buzzer pulses
+        playBeep(now, 0.14, 880);
+        playBeep(now + 0.22, 0.14, 880);
+        playBeep(now + 0.44, 0.24, 880);
+      }).catch(() => {});
     } catch (err) {
       console.warn("Could not play aggressive alarm sound via Web Audio Synth:", err);
     }
   }, []);
 
-  // Background check for critically delayed queries in the pool (unassigned, status != resolved, waiting >= 5m)
+  // Background check for critically delayed queries (unassigned OR assigned-to-me, waiting >= 5m)
   useEffect(() => {
     const checkInterval = setInterval(() => {
+      const userId = currentUserRef.current?.id;
       const hasEscalated = queriesRef.current.some(q => {
-        if (q.assignedTo || q.status === "resolved") return false;
+        if (q.status === "resolved") return false;
         const diffMs = Date.now() - new Date(q.time).getTime();
-        return diffMs >= 5 * 60000;
+        if (diffMs < 5 * 60000) return false;
+
+        // Case 1: Unassigned query in open pool
+        if (!q.assignedTo && !q.assignedToGroup) return true;
+
+        // Case 2: Assigned to current user (Specific Pool) but still open / not responded
+        if (userId && q.assignedTo === userId && q.status === "open") return true;
+
+        return false;
       });
 
       if (hasEscalated && soundEnabledRef.current) {
@@ -318,23 +333,24 @@ export const AppProvider = ({ children }) => {
       }
     });
 
-    // Auto-unlock audio on first click anywhere on the page
+    // Auto-unlock shared AudioContext on first user interaction
     const unlockAudio = () => {
       try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContext) return;
-        const ctx = new AudioContext();
-        ctx.resume().then(() => {
-          console.log("AudioContext Unlocked");
-          document.removeEventListener('click', unlockAudio);
-        }).catch(() => {});
+        const ctx = getAudioCtx();
+        if (ctx && ctx.state === 'suspended') {
+          ctx.resume().then(() => {
+            console.log("Shared AudioContext Unlocked");
+          }).catch(() => {});
+        }
       } catch {}
     };
     document.addEventListener('click', unlockAudio);
+    document.addEventListener('keydown', unlockAudio);
 
     return () => {
       disconnectSocket();
       document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('keydown', unlockAudio);
     };
   }, [backendOnline, currentUser?.id]);
 
@@ -686,11 +702,39 @@ export const AppProvider = ({ children }) => {
       const res = await groupsAPI.delete(groupId);
       if (res.success) {
         setAgentGroups(prev => prev.filter(g => g.id !== groupId));
+        setAgents(prev => prev.map(a => a.groupId === groupId ? { ...a, groupId: null } : a));
         return true;
       }
       throw new Error(res.message);
     } else {
       setAgentGroups(prev => prev.filter(g => g.id !== groupId));
+      setAgents(prev => prev.map(a => a.groupId === groupId ? { ...a, groupId: null } : a));
+      return true;
+    }
+  }, [backendOnline]);
+
+  const updateGroup = useCallback(async (groupId, agentIds) => {
+    if (backendOnline) {
+      const res = await groupsAPI.update(groupId, { agentIds });
+      if (res.success) {
+        setAgentGroups(prev => prev.map(g => g.id === groupId ? { ...g, agentCount: agentIds.length } : g));
+        // Clear old group assignments, then assign new ones
+        setAgents(prev => prev.map(a => {
+          if (agentIds.includes(a.id)) return { ...a, groupId };
+          if (a.groupId === groupId) return { ...a, groupId: null };
+          return a;
+        }));
+        return true;
+      }
+      throw new Error(res.message || 'Failed to update group');
+    } else {
+      // Mock mode
+      setAgentGroups(prev => prev.map(g => g.id === groupId ? { ...g, agentCount: agentIds.length } : g));
+      setAgents(prev => prev.map(a => {
+        if (agentIds.includes(a.id)) return { ...a, groupId };
+        if (a.groupId === groupId) return { ...a, groupId: null };
+        return a;
+      }));
       return true;
     }
   }, [backendOnline]);
@@ -728,6 +772,7 @@ export const AppProvider = ({ children }) => {
       agentGroups,
       createGroup,
       deleteGroup,
+      updateGroup,
     }}>
       {children}
     </AppContext.Provider>

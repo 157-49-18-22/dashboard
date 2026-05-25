@@ -235,3 +235,31 @@
 
 .wifi-icon { color: #25d366; }
 .zap-icon { color: #f59e0b; }
+
+/* Agent Switcher — Admin only dropdown */
+.agent-switcher {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a202c;
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  width: 100%;
+  padding: 0;
+  appearance: auto;
+}
+
+/* Non-admin locked name display */
+.agent-switcher-locked {
+  font-size: 13px;
+  font-weight: 700;
+  color: #4a5568;
+  display: block;
+  width: 100%;
+  user-select: none;
+  cursor: default;
+  letter-spacing: 0.01em;
+}
+

@@ -144,6 +144,7 @@ export const reportsAPI = {
 export const groupsAPI = {
   getAll: () => request("/groups"),
   create: (body) => request("/groups", { method: "POST", body: JSON.stringify(body) }),
+  update: (id, body) => request(`/groups/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
   delete: (id) => request(`/groups/${id}`, { method: "DELETE" }),
 };
 

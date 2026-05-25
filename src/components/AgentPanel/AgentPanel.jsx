@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useApp } from "../../context/AppContext";
 import { 
   Users, Circle, MessageSquare, CheckCircle, Clock, 
-  TrendingUp, UserPlus, Trash2, X, Mail, Lock, Shield, User, AlertCircle, KeyRound, Eye, EyeOff, ChevronDown
+  TrendingUp, UserPlus, Trash2, X, Mail, Lock, Shield, User, AlertCircle, KeyRound, Eye, EyeOff, ChevronDown, Pencil
 } from "lucide-react";
 import "./AgentPanel.css";
 
@@ -14,7 +14,7 @@ const statusConfig = {
 };
 
 const AgentPanel = () => {
-  const { agents, queries, createAgent, deleteAgent, resetAgentPassword, currentUser, agentGroups, createGroup, deleteGroup } = useApp();
+  const { agents, queries, createAgent, deleteAgent, resetAgentPassword, currentUser, agentGroups, createGroup, deleteGroup, updateGroup } = useApp();
 
   // ── Add Agent Modal State ──────────────────────────────────
   const [showModal, setShowModal] = useState(false);
@@ -48,25 +48,30 @@ const AgentPanel = () => {
   const [resetSuccess, setResetSuccess] = useState("");
   const [isResetSubmitting, setIsResetSubmitting] = useState(false);
 
+  // ── Edit Group Modal State ─────────────────────────────────
+  const [showEditGroupModal, setShowEditGroupModal] = useState(false);
+  const [editingGroup, setEditingGroup] = useState(null);
+  const [editSelectedAgents, setEditSelectedAgents] = useState([]);
+  const [editAgentDropdownOpen, setEditAgentDropdownOpen] = useState(false);
+  const [editGroupError, setEditGroupError] = useState("");
+  const [editGroupSuccess, setEditGroupSuccess] = useState("");
+  const [isEditGroupSubmitting, setIsEditGroupSubmitting] = useState(false);
+
   const dropdownRef = useRef(null);
+  const editDropdownRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setAgentDropdownOpen(false);
       }
+      if (editDropdownRef.current && !editDropdownRef.current.contains(event.target)) {
+        setEditAgentDropdownOpen(false);
+      }
     };
-
-    if (agentDropdownOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    } else {
-      document.removeEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [agentDropdownOpen]);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const onlineCount = agents.filter(a => a.status === "online").length;
 
@@ -134,6 +139,33 @@ const AgentPanel = () => {
       } catch (err) {
         alert(err.message || "Failed to delete group");
       }
+    }
+  };
+
+  // ── Edit Group handlers ────────────────────────────────────
+  const handleOpenEditGroup = (group) => {
+    setEditingGroup(group);
+    // Pre-fill with agents currently in this group
+    const currentAgentIds = agents.filter(a => a.groupId === group.id).map(a => a.id);
+    setEditSelectedAgents(currentAgentIds);
+    setEditGroupError("");
+    setEditGroupSuccess("");
+    setEditAgentDropdownOpen(false);
+    setShowEditGroupModal(true);
+  };
+
+  const handleEditGroupSubmit = async (e) => {
+    e.preventDefault();
+    setEditGroupError(""); setEditGroupSuccess("");
+    setIsEditGroupSubmitting(true);
+    try {
+      await updateGroup(editingGroup.id, editSelectedAgents);
+      setEditGroupSuccess("Group updated successfully!");
+      setTimeout(() => { setShowEditGroupModal(false); setEditGroupSuccess(""); }, 1500);
+    } catch (err) {
+      setEditGroupError(err.message || "Failed to update group");
+    } finally {
+      setIsEditGroupSubmitting(false);
     }
   };
 
@@ -221,6 +253,9 @@ const AgentPanel = () => {
                      </div>
                      {canManageAgents && (
                        <div className="agent-card-actions">
+                         <button className="agent-action-btn reset-btn" onClick={() => handleOpenEditGroup(group)} title="Edit Group Members">
+                           <Pencil size={15} />
+                         </button>
                          <button className="agent-action-btn delete-btn" onClick={() => handleDeleteGroup(group.id, group.name)} title="Delete Group">
                            <Trash2 size={16} />
                          </button>
@@ -444,6 +479,125 @@ const AgentPanel = () => {
                 </button>
                 <button type="submit" className="agent-btn-submit" disabled={isSubmitting}>
                   {isSubmitting ? "Creating..." : "Create Agent"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Edit Group Modal ── */}
+      {showEditGroupModal && editingGroup && (
+        <div className="agent-modal-overlay">
+          <div className="agent-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="agent-modal-header">
+              <div>
+                <h3>Edit Group: {editingGroup.name}</h3>
+                <p>Add or remove agents from this group</p>
+              </div>
+              <button className="agent-modal-close" onClick={() => setShowEditGroupModal(false)}>
+                <X size={16} />
+              </button>
+            </div>
+
+            <form onSubmit={handleEditGroupSubmit}>
+              <div className="agent-modal-body">
+                {editGroupError && (
+                  <div className="agent-modal-error">
+                    <AlertCircle size={14} />
+                    <span>{editGroupError}</span>
+                  </div>
+                )}
+                {editGroupSuccess && (
+                  <div className="agent-modal-success">
+                    <CheckCircle size={14} />
+                    <span>{editGroupSuccess}</span>
+                  </div>
+                )}
+
+                {/* Currently assigned agents summary */}
+                <div style={{ background: '#f0f4ff', borderRadius: '8px', padding: '10px 14px', marginBottom: '16px', fontSize: '13px', color: '#4f46e5' }}>
+                  <strong>{editSelectedAgents.length}</strong> agent(s) selected for <strong>{editingGroup.name}</strong>
+                </div>
+
+                <div className="agent-form-group" style={{ position: 'relative' }} ref={editDropdownRef}>
+                  <label>Select Agents for this Group</label>
+                  <div
+                    className="agent-input-wrapper"
+                    style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                    onClick={() => setEditAgentDropdownOpen(!editAgentDropdownOpen)}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Users size={14} className="agent-input-icon" style={{ position: 'relative', left: '0', transform: 'none' }} />
+                      <span style={{ color: editSelectedAgents.length > 0 ? '#1e293b' : '#94a3b8', fontSize: '13px', marginLeft: '6px' }}>
+                        {editSelectedAgents.length > 0 ? `${editSelectedAgents.length} agent(s) selected` : 'Select agents...'}
+                      </span>
+                    </div>
+                    <ChevronDown size={14} style={{ color: '#94a3b8', transform: editAgentDropdownOpen ? 'rotate(180deg)' : 'none', transition: '0.2s' }} />
+                  </div>
+
+                  {editAgentDropdownOpen && (
+                    <div style={{
+                      position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10,
+                      background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px',
+                      marginTop: '4px',
+                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                    }}>
+                      <div style={{ maxHeight: '180px', overflowY: 'auto' }}>
+                        {agents.map(a => (
+                          <label key={a.id} style={{
+                            display: 'flex', alignItems: 'center', padding: '10px 12px',
+                            borderBottom: '1px solid #f1f5f9', cursor: 'pointer', margin: 0,
+                            background: editSelectedAgents.includes(a.id) ? '#f0f4ff' : 'transparent'
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                          onMouseLeave={e => e.currentTarget.style.backgroundColor = editSelectedAgents.includes(a.id) ? '#f0f4ff' : 'transparent'}
+                          >
+                            <input
+                              type="checkbox"
+                              style={{ marginRight: '12px', marginTop: '0', width: '16px', height: '16px', cursor: 'pointer' }}
+                              checked={editSelectedAgents.includes(a.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) setEditSelectedAgents(prev => [...prev, a.id]);
+                                else setEditSelectedAgents(prev => prev.filter(id => id !== a.id));
+                              }}
+                            />
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                              <span style={{ fontSize: '13px', color: '#1e293b', fontWeight: '500' }}>
+                                {a.name}
+                                {a.groupId && a.groupId !== editingGroup.id && (
+                                  <span style={{ fontSize: '10px', color: '#f59e0b', marginLeft: '6px', fontWeight: '600' }}>• Other group</span>
+                                )}
+                                {a.groupId === editingGroup.id && (
+                                  <span style={{ fontSize: '10px', color: '#22c55e', marginLeft: '6px', fontWeight: '600' }}>• Current</span>
+                                )}
+                              </span>
+                              <span style={{ fontSize: '11px', color: '#64748b' }}>{a.role}</span>
+                            </div>
+                          </label>
+                        ))}
+                        {agents.length === 0 && <div style={{ padding: '12px', fontSize: '13px', color: '#64748b', textAlign: 'center' }}>No agents available</div>}
+                      </div>
+                      <div style={{ padding: '8px', borderTop: '1px solid #e2e8f0', background: '#f8fafc', borderBottomLeftRadius: '8px', borderBottomRightRadius: '8px' }}>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setEditAgentDropdownOpen(false); }}
+                          style={{ width: '100%', padding: '6px', background: '#667eea', color: '#fff', border: 'none', borderRadius: '4px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}
+                        >
+                          Done
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="agent-modal-footer">
+                <button type="button" className="agent-btn-cancel" onClick={() => setShowEditGroupModal(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="agent-btn-submit" disabled={isEditGroupSubmitting}>
+                  {isEditGroupSubmitting ? "Saving..." : "Save Changes"}
                 </button>
               </div>
             </form>
