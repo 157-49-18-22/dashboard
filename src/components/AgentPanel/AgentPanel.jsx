@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useApp } from "../../context/AppContext";
 import { 
   Users, Circle, MessageSquare, CheckCircle, Clock, 
-  TrendingUp, UserPlus, Trash2, X, Mail, Lock, Shield, User, AlertCircle, KeyRound, Eye, EyeOff, ChevronDown, Pencil
+  TrendingUp, UserPlus, Trash2, X, Mail, Lock, Shield, User, AlertCircle, KeyRound, Eye, EyeOff, ChevronDown, Pencil, Search
 } from "lucide-react";
 import "./AgentPanel.css";
 
@@ -36,6 +36,7 @@ const AgentPanel = () => {
   const [isGroupSubmitting, setIsGroupSubmitting] = useState(false);
   const [selectedAgents, setSelectedAgents] = useState([]);
   const [agentDropdownOpen, setAgentDropdownOpen] = useState(false);
+  const [agentSearch, setAgentSearch] = useState("");
 
   // ── Reset Password Modal State ─────────────────────────────
   const [showResetModal, setShowResetModal] = useState(false);
@@ -56,6 +57,7 @@ const AgentPanel = () => {
   const [editGroupError, setEditGroupError] = useState("");
   const [editGroupSuccess, setEditGroupSuccess] = useState("");
   const [isEditGroupSubmitting, setIsEditGroupSubmitting] = useState(false);
+  const [editAgentSearch, setEditAgentSearch] = useState("");
 
   const dropdownRef = useRef(null);
   const editDropdownRef = useRef(null);
@@ -524,67 +526,85 @@ const AgentPanel = () => {
                   <label>Select Agents for this Group</label>
                   <div
                     className="agent-input-wrapper"
-                    style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                    style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', border: '1.5px solid #e2e8f0', borderRadius: '14px', padding: '12px 16px' }}
                     onClick={() => setEditAgentDropdownOpen(!editAgentDropdownOpen)}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Users size={14} className="agent-input-icon" style={{ position: 'relative', left: '0', transform: 'none' }} />
-                      <span style={{ color: editSelectedAgents.length > 0 ? '#1e293b' : '#94a3b8', fontSize: '13px', marginLeft: '6px' }}>
+                      <Users size={16} color="#94a3b8" />
+                      <span style={{ color: editSelectedAgents.length > 0 ? '#1e293b' : '#94a3b8', fontSize: '14px', fontWeight: '500', marginLeft: '4px' }}>
                         {editSelectedAgents.length > 0 ? `${editSelectedAgents.length} agent(s) selected` : 'Select agents...'}
                       </span>
                     </div>
-                    <ChevronDown size={14} style={{ color: '#94a3b8', transform: editAgentDropdownOpen ? 'rotate(180deg)' : 'none', transition: '0.2s' }} />
+                    <ChevronDown size={16} style={{ color: '#94a3b8', transform: editAgentDropdownOpen ? 'rotate(180deg)' : 'none', transition: '0.3s cubic-bezier(0.4, 0, 0.2, 1)' }} />
                   </div>
 
                   {editAgentDropdownOpen && (
                     <div style={{
-                      position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10,
-                      background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px',
-                      marginTop: '4px',
-                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                      position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100,
+                      background: '#fff', border: '1px solid #e2e8f0', borderRadius: '14px',
+                      marginTop: '8px', overflow: 'hidden',
+                      boxShadow: '0 12px 16px -4px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.03)',
+                      animation: 'fadeIn 0.2s ease'
                     }}>
-                      <div style={{ maxHeight: '180px', overflowY: 'auto' }}>
-                        {agents.map(a => (
-                          <label key={a.id} style={{
-                            display: 'flex', alignItems: 'center', padding: '10px 12px',
-                            borderBottom: '1px solid #f1f5f9', cursor: 'pointer', margin: 0,
-                            background: editSelectedAgents.includes(a.id) ? '#f0f4ff' : 'transparent'
-                          }}
-                          onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f8fafc'}
-                          onMouseLeave={e => e.currentTarget.style.backgroundColor = editSelectedAgents.includes(a.id) ? '#f0f4ff' : 'transparent'}
+                      <div className="dropdown-search-wrapper" style={{ position: 'relative', flexDirection: 'column', alignItems: 'stretch', gap: '6px', padding: '10px 12px' }}>
+                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                          <Search size={14} className="search-icon-small" style={{ left: '12px' }} />
+                          <input 
+                            type="text" 
+                            className="dropdown-search-input" 
+                            placeholder="Search agents..." 
+                            value={editAgentSearch}
+                            onChange={(e) => setEditAgentSearch(e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                            autoFocus
+                            style={{ padding: '8px 12px 8px 36px', fontSize: '13px' }}
+                          />
+                        </div>
+                        <div style={{ fontSize: '10px', color: '#667eea', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.8px', paddingLeft: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <div style={{ width: '4px', height: '4px', background: '#667eea', borderRadius: '50%' }}></div>
+                          {agents.filter(a => a.name.toLowerCase().includes(editAgentSearch.toLowerCase())).length} Agents Available
+                        </div>
+                      </div>
+                      <div className="dropdown-list">
+                        {agents.filter(a => a.name.toLowerCase().includes(editAgentSearch.toLowerCase())).map(a => (
+                          <label key={a.id} className={`dropdown-item ${editSelectedAgents.includes(a.id) ? 'selected' : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (editSelectedAgents.includes(a.id)) setEditSelectedAgents(prev => prev.filter(id => id !== a.id));
+                              else setEditSelectedAgents(prev => [...prev, a.id]);
+                            }}
                           >
                             <input
                               type="checkbox"
-                              style={{ marginRight: '12px', marginTop: '0', width: '16px', height: '16px', cursor: 'pointer' }}
+                              className="checkbox-custom"
                               checked={editSelectedAgents.includes(a.id)}
-                              onChange={(e) => {
-                                if (e.target.checked) setEditSelectedAgents(prev => [...prev, a.id]);
-                                else setEditSelectedAgents(prev => prev.filter(id => id !== a.id));
-                              }}
+                              readOnly
                             />
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                              <span style={{ fontSize: '13px', color: '#1e293b', fontWeight: '500' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                              <span style={{ fontSize: '14px', color: '#1e293b', fontWeight: '600' }}>
                                 {a.name}
                                 {a.groupId && a.groupId !== editingGroup.id && (
-                                  <span style={{ fontSize: '10px', color: '#f59e0b', marginLeft: '6px', fontWeight: '600' }}>• Other group</span>
+                                  <span style={{ fontSize: '10px', color: '#f59e0b', marginLeft: '8px', fontWeight: '800', padding: '2px 6px', background: '#fffbeb', borderRadius: '6px' }}>Other group</span>
                                 )}
                                 {a.groupId === editingGroup.id && (
-                                  <span style={{ fontSize: '10px', color: '#22c55e', marginLeft: '6px', fontWeight: '600' }}>• Current</span>
+                                  <span style={{ fontSize: '10px', color: '#25d366', marginLeft: '8px', fontWeight: '800', padding: '2px 6px', background: '#f0fdf4', borderRadius: '6px' }}>Current</span>
                                 )}
                               </span>
-                              <span style={{ fontSize: '11px', color: '#64748b' }}>{a.role}</span>
+                              <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '500' }}>{a.role}</span>
                             </div>
                           </label>
                         ))}
-                        {agents.length === 0 && <div style={{ padding: '12px', fontSize: '13px', color: '#64748b', textAlign: 'center' }}>No agents available</div>}
+                        {agents.filter(a => a.name.toLowerCase().includes(editAgentSearch.toLowerCase())).length === 0 && (
+                          <div className="dropdown-empty">No matching agents found</div>
+                        )}
                       </div>
-                      <div style={{ padding: '8px', borderTop: '1px solid #e2e8f0', background: '#f8fafc', borderBottomLeftRadius: '8px', borderBottomRightRadius: '8px' }}>
+                      <div style={{ padding: '12px', borderTop: '1px solid #f1f5f9', background: '#f8fafc' }}>
                         <button
                           type="button"
                           onClick={(e) => { e.stopPropagation(); setEditAgentDropdownOpen(false); }}
-                          style={{ width: '100%', padding: '6px', background: '#667eea', color: '#fff', border: 'none', borderRadius: '4px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}
+                          style={{ width: '100%', padding: '10px', background: 'linear-gradient(135deg, #667eea, #764ba2)', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: '800', cursor: 'pointer', boxShadow: '0 4px 12px rgba(102, 126, 234, 0.2)' }}
                         >
-                          Done
+                          Confirm Selection
                         </button>
                       </div>
                     </div>
@@ -660,58 +680,77 @@ const AgentPanel = () => {
                   <label>Assign Existing Agents</label>
                   <div 
                     className="agent-input-wrapper" 
-                    style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                    style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', border: '1.5px solid #e2e8f0', borderRadius: '14px', padding: '12px 16px' }}
                     onClick={() => setAgentDropdownOpen(!agentDropdownOpen)}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Users size={14} className="agent-input-icon" style={{ position: 'relative', left: '0', transform: 'none' }} />
-                      <span style={{ color: selectedAgents.length > 0 ? '#1e293b' : '#94a3b8', fontSize: '13px', marginLeft: '6px' }}>
+                      <Users size={16} color="#94a3b8" />
+                      <span style={{ color: selectedAgents.length > 0 ? '#1e293b' : '#94a3b8', fontSize: '14px', fontWeight: '500', marginLeft: '4px' }}>
                         {selectedAgents.length > 0 ? `${selectedAgents.length} agent(s) selected` : 'Select agents...'}
                       </span>
                     </div>
-                    <ChevronDown size={14} style={{ color: '#94a3b8', transform: agentDropdownOpen ? 'rotate(180deg)' : 'none', transition: '0.2s' }} />
+                    <ChevronDown size={16} style={{ color: '#94a3b8', transform: agentDropdownOpen ? 'rotate(180deg)' : 'none', transition: '0.3s cubic-bezier(0.4, 0, 0.2, 1)' }} />
                   </div>
                   
                   {agentDropdownOpen && (
                     <div style={{
-                      position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10,
-                      background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', 
-                      marginTop: '4px',
-                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
+                      position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100,
+                      background: '#fff', border: '1px solid #e2e8f0', borderRadius: '14px', 
+                      marginTop: '8px', overflow: 'hidden',
+                      boxShadow: '0 12px 16px -4px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.03)',
+                      animation: 'fadeIn 0.2s ease'
                     }}>
-                      <div style={{ maxHeight: '150px', overflowY: 'auto' }}>
-                        {agents.map(a => (
-                          <label key={a.id} style={{ 
-                            display: 'flex', alignItems: 'center', padding: '10px 12px', 
-                            borderBottom: '1px solid #f1f5f9', cursor: 'pointer', margin: 0 
-                          }}
-                          onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f8fafc'}
-                          onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                      <div className="dropdown-search-wrapper" style={{ position: 'relative', flexDirection: 'column', alignItems: 'stretch', gap: '6px', padding: '10px 12px' }}>
+                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                          <Search size={14} className="search-icon-small" style={{ left: '12px' }} />
+                          <input 
+                            type="text" 
+                            className="dropdown-search-input" 
+                            placeholder="Search agents..." 
+                            value={agentSearch}
+                            onChange={(e) => setAgentSearch(e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                            autoFocus
+                            style={{ padding: '8px 12px 8px 36px', fontSize: '13px' }}
+                          />
+                        </div>
+                        <div style={{ fontSize: '10px', color: '#667eea', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.8px', paddingLeft: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <div style={{ width: '4px', height: '4px', background: '#667eea', borderRadius: '50%' }}></div>
+                          {agents.filter(a => a.name.toLowerCase().includes(agentSearch.toLowerCase())).length} Agents Available
+                        </div>
+                      </div>
+                      <div className="dropdown-list">
+                        {agents.filter(a => a.name.toLowerCase().includes(agentSearch.toLowerCase())).map(a => (
+                          <label key={a.id} className={`dropdown-item ${selectedAgents.includes(a.id) ? 'selected' : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (selectedAgents.includes(a.id)) setSelectedAgents(prev => prev.filter(id => id !== a.id));
+                              else setSelectedAgents(prev => [...prev, a.id]);
+                            }}
                           >
                             <input 
                               type="checkbox" 
-                              style={{ marginRight: '12px', marginTop: '0', width: '16px', height: '16px', cursor: 'pointer' }}
+                              className="checkbox-custom"
                               checked={selectedAgents.includes(a.id)}
-                              onChange={(e) => {
-                                if (e.target.checked) setSelectedAgents(prev => [...prev, a.id]);
-                                else setSelectedAgents(prev => prev.filter(id => id !== a.id));
-                              }}
+                              readOnly
                             />
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                              <span style={{ fontSize: '13px', color: '#1e293b', fontWeight: '500' }}>{a.name}</span>
-                              <span style={{ fontSize: '11px', color: '#64748b' }}>{a.role}</span>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                              <span style={{ fontSize: '14px', color: '#1e293b', fontWeight: '600' }}>{a.name}</span>
+                              <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '500' }}>{a.role}</span>
                             </div>
                           </label>
                         ))}
-                        {agents.length === 0 && <div style={{ padding: '12px', fontSize: '13px', color: '#64748b', textAlign: 'center' }}>No agents available</div>}
+                        {agents.filter(a => a.name.toLowerCase().includes(agentSearch.toLowerCase())).length === 0 && (
+                          <div className="dropdown-empty">No matching agents found</div>
+                        )}
                       </div>
-                      <div style={{ padding: '8px', borderTop: '1px solid #e2e8f0', background: '#f8fafc', borderBottomLeftRadius: '8px', borderBottomRightRadius: '8px' }}>
+                      <div style={{ padding: '12px', borderTop: '1px solid #f1f5f9', background: '#f8fafc' }}>
                         <button 
                           type="button" 
                           onClick={(e) => { e.stopPropagation(); setAgentDropdownOpen(false); }}
-                          style={{ width: '100%', padding: '6px', background: '#667eea', color: '#fff', border: 'none', borderRadius: '4px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}
+                          style={{ width: '100%', padding: '10px', background: 'linear-gradient(135deg, #128c7e, #25d366)', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: '800', cursor: 'pointer', boxShadow: '0 4px 12px rgba(37, 211, 102, 0.2)' }}
                         >
-                          OK, Done
+                          Confirm Selection
                         </button>
                       </div>
                     </div>
