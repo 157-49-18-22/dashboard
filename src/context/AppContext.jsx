@@ -249,7 +249,8 @@ export const AppProvider = ({ children }) => {
             ...q, 
             unread: (q.unread || 0) + 1, 
             message: msgText,
-            messages: alreadyExists ? history : [...history, typeof message === 'string' ? { text: message, sender: 'customer', time: new Date().toLocaleTimeString() } : message]
+            time: typeof message === 'object' && message?.createdAt ? message.createdAt : new Date().toISOString(),
+            messages: alreadyExists ? history : [...history, typeof message === 'string' ? { text: message, sender: 'customer', time: new Date().toISOString(), createdAt: new Date().toISOString() } : message]
           };
         });
       });
@@ -325,10 +326,10 @@ export const AppProvider = ({ children }) => {
             return !isOptimisticMatch && m.id !== msg.id;
           });
           
-          return { 
+          return {
             ...q, 
             message: msg.text,
-            time: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }),
+            time: msg.createdAt || new Date().toISOString(),
             messages: [...cleanedMessages, msg],
             unread: msg.sender === "customer" ? (q.unread || 0) + 1 : q.unread
           };
@@ -414,14 +415,15 @@ export const AppProvider = ({ children }) => {
     const attachmentUrl = payload?.attachmentUrl || "";
     const messageType = payload?.messageType || "text";
     if (!text.trim() && !attachmentUrl.trim()) return;
-    const time = new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+    const isoTime = new Date().toISOString();
     const messageText = attachmentUrl || text;
     const previewText = messageType === "image" ? "[Image]" : messageType === "document" ? "[Document]" : messageText;
     const newMsg = {
       id: Date.now(),
       sender: "agent",
       text: messageText,
-      time,
+      time: isoTime,
+      createdAt: isoTime,
       agentName: currentUser?.name,
       messageType,
       replyToMessageId: payload?.replyTo?.messageId || null,
@@ -441,7 +443,7 @@ export const AppProvider = ({ children }) => {
     setActivityLogs((prev) => [{
       id: Date.now(), agentId: currentUser?.id, agentName: currentUser?.name,
       action: "Sent a message", customer: queries.find((q) => q.id === queryId)?.name || "Unknown",
-      time, type: "message", date: new Date().toISOString().split("T")[0],
+      time: isoTime, type: "message", date: new Date().toISOString().split("T")[0],
     }, ...prev]);
 
     // Real backend call or mock auto-reply

@@ -250,6 +250,19 @@ const ChatWindow = () => {
     );
   }
 
+  const formatMessageTime = (msg) => {
+    const timestamp = msg.createdAt || msg.time;
+    if (!timestamp) return "";
+    try {
+      const date = new Date(timestamp);
+      // Check if date is valid
+      if (isNaN(date.getTime())) return msg.time || ""; 
+      return date.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+    } catch {
+      return msg.time || "";
+    }
+  };
+
   return (
     <div className="chat-window">
       {/* Header */}
@@ -352,7 +365,7 @@ const ChatWindow = () => {
                 ) : (
                   <p>{msg.text}</p>
                 )}
-                <span className="msg-time">{msg.time}{msg.sender === "agent" && <span className="msg-ticks"> ✓✓</span>}</span>
+                <span className="msg-time">{formatMessageTime(msg)}{msg.sender === "agent" && <span className="msg-ticks"> ✓✓</span>}</span>
               </div>
             </div>
           ))}

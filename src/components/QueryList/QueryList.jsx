@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApp } from "../../context/AppContext";
 import { Search, Filter, AlertCircle, Clock, CheckCircle, Loader } from "lucide-react";
 import "./QueryList.css";
@@ -30,6 +30,14 @@ const getTimerLabel = (isoString) => {
 const QueryList = () => {
   const { getFilteredQueries, selectedQuery, setSelectedQuery, filterStatus, setFilterStatus, assignQuery, activeTab } = useApp();
   const [searchText, setSearchText] = useState("");
+  // Ticker forces re-render every 30s so relative time labels ("Xm ago") stay live
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => setTick(t => t + 1), 30000);
+    return () => clearInterval(timer);
+  }, []);
+
 
   const queries = getFilteredQueries().filter((q) =>
     q.name.toLowerCase().includes(searchText.toLowerCase()) ||
