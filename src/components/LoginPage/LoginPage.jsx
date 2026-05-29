@@ -79,13 +79,7 @@ const LoginPage = ({ onLogin }) => {
           </button>
         </form>
 
-        <div className="login-hint">
-          <p>Default credentials:</p>
-          <div className="login-creds">
-            <span>sneha@company.com / password123</span>
-            <span>admin@company.com / password123</span>
-          </div>
-        </div>
+
       </div>
     </div>
   );
