@@ -143,7 +143,7 @@ export const AppProvider = ({ children }) => {
         // Case 1: Unassigned query in open pool
         if (!q.assignedTo && !q.assignedToGroup) return true;
 
-        // Case 2: Assigned to current user (Specific Pool) but still open / not responded
+        // Case 2: Assigned to current user (Team Member Pool) but still open / not responded
         if (userId && q.assignedTo === userId && q.status === "open") return true;
 
         return false;

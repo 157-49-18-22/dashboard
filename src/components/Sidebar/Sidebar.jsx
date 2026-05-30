@@ -8,7 +8,7 @@ import "./Sidebar.css";
 const navItems = [
   { id: "queries", label: "Queries", icon: MessageSquare },
   { id: "pool", label: "Query Pool", icon: Inbox },
-  { id: "specific", label: "Specific Pool", icon: MessageSquare },
+  { id: "specific", label: "Team Member Pool", icon: MessageSquare },
   { id: "department", label: "Department Pool", icon: Inbox },
   { id: "agents", label: "Agents", icon: Users },
   { id: "sent", label: "Sent", icon: Send },
@@ -29,6 +29,13 @@ const Sidebar = ({ onLogout }) => {
   const deptCount = queries.filter((q) => !q.assignedTo && q.assignedToGroup && q.assignedToGroup === currentUser?.groupId && q.status !== "resolved").length;
   const specificCount = queries.filter((q) => q.assignedTo === currentUser?.id && q.status === "open").length;
 
+  const isAdmin = currentUser?.role?.toLowerCase()?.includes("admin") || currentUser?.role?.toLowerCase()?.includes("superadmin");
+
+  const visibleNavItems = navItems.filter(item => {
+    if (isAdmin) return true;
+    return ["queries", "pool", "specific", "department"].includes(item.id);
+  });
+
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
@@ -45,7 +52,7 @@ const Sidebar = ({ onLogout }) => {
         <div className="user-avatar">{currentUser?.avatar || "??"}</div>
         <div className="user-info">
           {/* Only Admin/Superadmin can switch accounts */}
-          {(currentUser?.role?.toLowerCase()?.includes("admin") || currentUser?.role?.toLowerCase()?.includes("superadmin")) ? (
+          {isAdmin ? (
             <select
               className="agent-switcher"
               value={currentUser?.id || ""}
@@ -80,7 +87,7 @@ const Sidebar = ({ onLogout }) => {
       `}</style>
 
       <nav className="sidebar-nav">
-        {navItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const Icon = item.icon;
           const isPulse = (item.id === "pool" && poolCount > 0) || (item.id === "department" && deptCount > 0) || (item.id === "specific" && specificCount > 0);
           return (

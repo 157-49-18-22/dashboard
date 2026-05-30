@@ -80,7 +80,7 @@ const QueryPool = () => {
             <h2>
               {activeTab === 'pool' && 'Open Query Pool'}
               {activeTab === 'department' && 'Department Pool'}
-              {activeTab === 'specific' && 'Specific Pool'}
+              {activeTab === 'specific' && 'Team Member Pool'}
             </h2>
             <p>Claim incoming customer queries to start replying</p>
           </div>
