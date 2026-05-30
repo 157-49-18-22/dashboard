@@ -12,7 +12,7 @@ const LoginPage = ({ onLogin }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email || !password) { setError("Email aur password daalna zaroori hai"); return; }
+    if (!email || !password) { setError("Email and password are required"); return; }
     setLoading(true);
     setError("");
     try {
@@ -23,7 +23,7 @@ const LoginPage = ({ onLogin }) => {
         onLogin(data.agent, data.token);
       }
     } catch (err) {
-      setError(err.message || "Login failed. Email ya password galat hai.");
+      setError(err.message || "Login failed. Invalid email or password.");
     } finally {
       setLoading(false);
     }

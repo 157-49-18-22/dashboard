@@ -1,7 +1,9 @@
 .reports-panel {
   padding: 30px;
   background: #f8fafc;
-  min-height: 100vh;
+  height: 100%;
+  flex: 1;
+  overflow-y: auto;
   animation: fadeIn 0.4s ease;
 }
 
