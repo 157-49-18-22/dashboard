@@ -1,4 +1,4 @@
-.activity-log { flex: 1; background: #f0f4f8; overflow-y: auto; }
+.activity-log { flex: 1; background: #f0f4f8; overflow-y: auto; overflow-x: hidden; height: 100%; box-sizing: border-box; }
 .activity-log::-webkit-scrollbar { width: 4px; }
 .activity-log::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 2px; }
 .activity-log-inner { padding: 24px; display: flex; flex-direction: column; gap: 28px; }
@@ -58,9 +58,21 @@
 .tl-time { font-size: 11px; color: #a0aec0; }
 .tl-type-badge { font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 12px; flex-shrink: 0; }
 
+/* Tablet */
+@media (max-width: 1024px) {
+  .activity-log-inner {
+    padding: 18px;
+  }
+
+  .summary-table-wrap {
+    overflow-x: auto;
+  }
+}
+
+/* Mobile */
 @media (max-width: 768px) {
   .activity-log-inner {
-    padding: 16px;
+    padding: 14px;
   }
 
   .tl-main {
@@ -75,4 +87,9 @@
     padding: 10px;
     font-size: 12px;
   }
+
+  .section-title h2 {
+    font-size: 15px;
+  }
 }
+

@@ -1,4 +1,4 @@
-.stats-overview { flex: 1; background: #f0f4f8; overflow-y: auto; }
+.stats-overview { flex: 1; background: #f0f4f8; overflow-y: auto; overflow-x: hidden; height: 100%; box-sizing: border-box; }
 .stats-overview::-webkit-scrollbar { width: 4px; }
 .stats-overview::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 2px; }
 .stats-inner { padding: 24px; }
@@ -24,7 +24,7 @@
 .kpi-label { font-size: 12px; color: #718096; font-weight: 600; margin-bottom: 4px; }
 .kpi-sub { font-size: 11px; color: #a0aec0; }
 
-.stats-bottom { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.stats-bottom { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr)); gap: 16px; }
 
 .chart-card {
   background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px;
@@ -59,14 +59,30 @@
 .api-label { flex: 1; font-size: 12px; color: #4a5568; font-weight: 500; }
 .api-status { font-size: 11px; font-weight: 700; }
 
-@media (max-width: 1100px) { .stats-bottom { grid-template-columns: 1fr 1fr; } }
+/* Tablet */
+@media (max-width: 1100px) {
+  .stats-inner {
+    padding: 18px;
+  }
+
+  .sh-left h2 {
+    font-size: 16px;
+  }
+}
+
+/* Mobile */
 @media (max-width: 768px) {
   .stats-inner {
-    padding: 16px;
+    padding: 14px;
   }
-  
+
+  .stats-header {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
   .stats-header h2 {
-    font-size: 20px;
+    font-size: 18px;
   }
 
   .stats-date {
@@ -77,17 +93,15 @@
     grid-template-columns: 1fr 1fr;
   }
 
-  .stats-bottom {
-    grid-template-columns: 1fr;
-  }
-
   .tp-stats {
     gap: 10px;
     padding: 10px;
   }
 }
+
 @media (max-width: 480px) {
   .kpi-grid {
     grid-template-columns: 1fr;
   }
 }
+
