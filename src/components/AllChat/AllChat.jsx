@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { queriesAPI, messagesAPI } from "../../services/api";
-import { Search, Loader2, MessageSquare, User, CheckCircle2, Clock, X, ZoomIn } from "lucide-react";
+import { Search, Loader2, MessageSquare, User, CheckCircle2, Clock, X, ZoomIn, Send } from "lucide-react";
+import { useApp } from "../../context/AppContext";
 import "./AllChat.css";
 
 const AllChat = () => {
@@ -16,6 +17,11 @@ const AllChat = () => {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [msgLimit, setMsgLimit] = useState(30);
   const [lightboxImg, setLightboxImg] = useState(null);
+  
+  const { currentUser, sendMessage } = useApp();
+  const isAdmin = currentUser?.role?.toLowerCase().includes("admin") || currentUser?.role?.toLowerCase().includes("senior");
+  const [replyText, setReplyText] = useState("");
+  const [sending, setSending] = useState(false);
 
   const messagesEndRef = useRef(null);
 
@@ -100,6 +106,30 @@ const AllChat = () => {
     return <span className="stat-badge open">Open</span>
   }
 
+  const handleSendReply = async () => {
+    if (!replyText.trim() || !selectedQuery) return;
+    setSending(true);
+    try {
+      await sendMessage(selectedQuery.id, { text: replyText, messageType: "text" });
+      setMessages(prev => [...prev, {
+        id: Date.now(),
+        sender: "agent",
+        agentName: currentUser?.name || "Admin",
+        text: replyText,
+        time: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }),
+        messageType: "text"
+      }]);
+      setReplyText("");
+      setTimeout(() => {
+        if (messagesEndRef.current) messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    } catch (err) {
+      alert("Failed to send reply");
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
     <>
     <div className="allchat-container">
@@ -161,7 +191,7 @@ const AllChat = () => {
                 <h3>{selectedQuery.name}</h3>
                 <span>{selectedQuery.from}</span>
               </div>
-              <div className="readonly-badge">READ ONLY MODE</div>
+              <div className="readonly-badge">{isAdmin ? "ADMIN REPLY ENABLED" : "READ ONLY MODE"}</div>
             </div>
 
             <div className="ac-messages">
@@ -219,9 +249,30 @@ const AllChat = () => {
               )}
             </div>
 
-            <div className="ac-chat-footer">
-              <p>Chat is closed for reply in this viewer. Go to active pools to interact.</p>
-            </div>
+            {isAdmin ? (
+              <div className="ac-chat-footer admin-reply-footer" style={{ display: 'flex', gap: '10px', alignItems: 'center', padding: '10px', background: '#fff', borderTop: '1px solid #e2e8f0' }}>
+                <input 
+                  type="text" 
+                  value={replyText} 
+                  onChange={(e) => setReplyText(e.target.value)} 
+                  onKeyDown={(e) => e.key === 'Enter' && handleSendReply()}
+                  placeholder="Type a reply as admin..." 
+                  style={{ flex: 1, padding: '10px', border: '1px solid #e2e8f0', borderRadius: '8px', outline: 'none' }}
+                />
+                <button 
+                  onClick={handleSendReply} 
+                  disabled={!replyText.trim() || sending}
+                  style={{ background: '#25d366', color: '#fff', border: 'none', padding: '10px 14px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <Send size={16} />
+                  {sending ? "Sending..." : "Send"}
+                </button>
+              </div>
+            ) : (
+              <div className="ac-chat-footer">
+                <p>Chat is closed for reply in this viewer. Go to active pools to interact.</p>
+              </div>
+            )}
           </div>
         ) : (
           <div className="ac-no-selection">
