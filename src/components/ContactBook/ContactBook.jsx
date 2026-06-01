@@ -66,11 +66,24 @@ const ContactBook = () => {
     setIsModalOpen(true);
   };
 
-  const handleSyncExcel = async () => {
-    if (!window.confirm("This will read the 'PARENT MOBILE NO.xlsx' file from public folder and import new contacts. Continue?")) return;
+  const handleSyncExcel = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!window.confirm(`Upload and sync contacts from ${file.name}?`)) {
+      e.target.value = null; // reset input
+      return;
+    }
+    
     setIsSyncing(true);
+    const formData = new FormData();
+    formData.append("excelFile", file);
+
     try {
-      const res = await fetch(`${API_BASE}/contacts/import`, { method: "POST" });
+      const res = await fetch(`${API_BASE}/contacts/import`, { 
+        method: "POST",
+        body: formData
+      });
       const data = await res.json();
       if (data.success) {
         setSuccess(data.message);
@@ -83,6 +96,7 @@ const ContactBook = () => {
       setError("Server error during sync");
     } finally {
       setIsSyncing(false);
+      e.target.value = null; // reset input wrapper
     }
   };
 
@@ -158,9 +172,16 @@ const ContactBook = () => {
           <p>Manage customer contacts. Names here seamlessly integrate and override default WhatsApp numbers.</p>
         </div>
         <div className="header-actions">
-          <button className="sync-btn" onClick={handleSyncExcel} disabled={isSyncing}>
-            {isSyncing ? "Syncing..." : "Sync from Excel"}
-          </button>
+          <label className={`sync-btn ${isSyncing ? 'disabled' : ''}`}>
+            {isSyncing ? "Uploading..." : "Import Excel File"}
+            <input 
+              type="file" 
+              accept=".xlsx, .xls" 
+              onChange={handleSyncExcel} 
+              disabled={isSyncing}
+              style={{ display: 'none' }} 
+            />
+          </label>
           <button className="add-contact-btn" onClick={openModalForAdd}>
             <Plus size={18} />
             <span>Add New Contact</span>
