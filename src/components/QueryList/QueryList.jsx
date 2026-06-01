@@ -97,7 +97,7 @@ const QueryList = () => {
             return (
               <div
                 key={query.id}
-                className={`query-item ${selectedQuery?.id === query.id ? "selected" : ""} ${query.unread > 0 ? "has-unread" : ""}`}
+                className={`query-item ${selectedQuery?.id === query.id ? "selected" : ""} ${query.unread > 0 ? "has-unread" : ""} ${query.status === 'in_progress' && query.priority === 'urgent' ? 'is-urgent-progress' : ''}`}
                 onClick={() => handleSelectQuery(query)}
               >
                 <div className="query-avatar">

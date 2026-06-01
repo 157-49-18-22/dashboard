@@ -246,7 +246,8 @@ export const AppProvider = ({ children }) => {
           const alreadyExists = typeof message === 'object' && message?.id && history.some(m => m.id === message.id);
           
           return { 
-            ...q, 
+            ...q,
+            ...(query && query.priority ? { priority: query.priority } : {}),
             unread: (q.unread || 0) + 1, 
             message: msgText,
             time: typeof message === 'object' && message?.createdAt ? message.createdAt : new Date().toISOString(),
@@ -620,6 +621,12 @@ export const AppProvider = ({ children }) => {
     if (filterStatus !== "all") {
       visible = visible.filter((q) => q.status === filterStatus);
     }
+
+    // User requested rule: an in_progress chat should ONLY be visible to the agent who owns it.
+    visible = visible.filter(q => {
+      if (q.status === 'in_progress' && q.assignedTo !== currentUser?.id) return false;
+      return true;
+    });
 
     // 3. SORT by time (Most recent first) - This ensures new messages jump to the top
     return [...visible].sort((a, b) => new Date(b.time) - new Date(a.time));

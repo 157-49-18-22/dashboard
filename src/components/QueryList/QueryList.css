@@ -267,3 +267,13 @@
     padding: 16px 12px;
   }
 }
+
+.query-item.is-urgent-progress {
+  background-color: #fee2e2 !important;
+  border-left: 3px solid #ef4444 !important;
+  box-shadow: 0 1px 5px rgba(239, 68, 68, 0.2);
+}
+
+.query-item.is-urgent-progress:hover {
+  background-color: #fecaca !important;
+}
