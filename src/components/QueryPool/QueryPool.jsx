@@ -140,10 +140,10 @@ const QueryPool = () => {
                             {isExpanded ? (
                               <div className="mini-chat-thread">
                                 <div className="thread-header">
-                                  <span>Message History ({query.messages.length})</span>
+                                  <span>Recent Messages ({Math.min(10, query.messages.length)} of {query.messages.length})</span>
                                 </div>
                                 <div className="thread-bubbles">
-                                  {query.messages.map((msg, index) => {
+                                  {query.messages.slice(-10).map((msg, index) => {
                                     const isCustomer = msg.sender === "customer";
                                     return (
                                       <div key={msg.id || index} className={`mini-bubble-wrap ${isCustomer ? "customer" : "agent"}`}>
@@ -163,7 +163,7 @@ const QueryPool = () => {
                               <div className="preview-collapsed">
                                 <p>{query.message}</p>
                                 <button className="toggle-history-btn expand" onClick={() => toggleExpand(query.id)}>
-                                  <MessageSquare size={11} /> View all messages ({query.messages.length}) <ChevronDown size={11} />
+                                  <MessageSquare size={11} /> View recent messages ({Math.min(10, query.messages.length)}/{query.messages.length}) <ChevronDown size={11} />
                                 </button>
                               </div>
                             )}

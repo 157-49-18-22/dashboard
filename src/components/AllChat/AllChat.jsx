@@ -18,8 +18,9 @@ const AllChat = () => {
   const [msgLimit, setMsgLimit] = useState(30);
   const [lightboxImg, setLightboxImg] = useState(null);
   
-  const { currentUser, sendMessage } = useApp();
+  const { currentUser, sendMessage, agents } = useApp();
   const isAdmin = currentUser?.role?.toLowerCase().includes("admin") || currentUser?.role?.toLowerCase().includes("senior");
+  const [chatFilter, setChatFilter] = useState("all");
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);
 
@@ -43,10 +44,10 @@ const AllChat = () => {
     };
   }, [lightboxImg, handleKeyDown]);
 
-  const loadQueries = async (p = 1, search = "") => {
+  const loadQueries = async (p = 1, search = "", status = "all") => {
     try {
       setLoading(true);
-      const res = await queriesAPI.getAll({ page: p, limit: 10, search, status: 'all' });
+      const res = await queriesAPI.getAll({ page: p, limit: 10, search, status });
       if (res && res.data) {
         if (p === 1) setQueries(res.data);
         else setQueries(prev => [...prev, ...res.data]);
@@ -70,8 +71,8 @@ const AllChat = () => {
   }, [searchInput]);
 
   useEffect(() => {
-    loadQueries(page, searchQuery);
-  }, [page, searchQuery]);
+    loadQueries(page, searchQuery, chatFilter);
+  }, [page, searchQuery, chatFilter]);
 
   const handleSelectChat = async (q) => {
     setSelectedQuery(q);
@@ -105,6 +106,21 @@ const AllChat = () => {
     if (status === 'in_progress') return <span className="stat-badge in_progress"><Clock size={12}/> In Progress</span>
     return <span className="stat-badge open">Open</span>
   }
+
+  const handleReassign = async (agentId) => {
+    if (!selectedQuery) return;
+    try {
+      if (!agentId) return;
+      // Change status to 'open' so it lands in their Team Member Pool for claiming
+      await queriesAPI.assign(selectedQuery.id, agentId, null, "open");
+      alert("Chat reassigned successfully!");
+      // Optionally refresh query list and reset selection
+      loadQueries(1, searchQuery, chatFilter);
+      setSelectedQuery(null);
+    } catch (err) {
+      alert("Failed to reassign chat");
+    }
+  };
 
   const handleSendReply = async () => {
     if (!replyText.trim() || !selectedQuery) return;
@@ -145,6 +161,23 @@ const AllChat = () => {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
             />
+          </div>
+          <div className="ac-filters" style={{ display: 'flex', gap: '8px', marginTop: '12px', overflowX: 'auto' }}>
+            {['all', 'open', 'in_progress'].map(f => (
+              <button 
+                key={f}
+                style={{
+                  padding: '6px 12px', borderRadius: '16px', border: '1px solid #e2e8f0',
+                  background: chatFilter === f ? '#6366f1' : '#f8fafc',
+                  color: chatFilter === f ? '#fff' : '#64748b',
+                  fontSize: '12px', cursor: 'pointer', textTransform: 'capitalize',
+                  whiteSpace: 'nowrap'
+                }}
+                onClick={() => { setChatFilter(f); setPage(1); }}
+              >
+                {f.replace('_', ' ')}
+              </button>
+            ))}
           </div>
         </div>
         
@@ -191,7 +224,21 @@ const AllChat = () => {
                 <h3>{selectedQuery.name}</h3>
                 <span>{selectedQuery.from}</span>
               </div>
-              <div className="readonly-badge">{isAdmin ? "ADMIN REPLY ENABLED" : "READ ONLY MODE"}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                {isAdmin && (
+                  <select 
+                    onChange={(e) => handleReassign(e.target.value)} 
+                    value=""
+                    className="agent-assign-select"
+                  >
+                    <option value="" disabled>Assign to Agent...</option>
+                    {agents.map(a => (
+                      <option key={a.id} value={a.id}>{a.name}</option>
+                    ))}
+                  </select>
+                )}
+                <div className="readonly-badge">{isAdmin ? "ADMIN REPLY ENABLED" : "READ ONLY MODE"}</div>
+              </div>
             </div>
 
             <div className="ac-messages">
