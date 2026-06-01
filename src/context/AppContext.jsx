@@ -250,8 +250,7 @@ export const AppProvider = ({ children }) => {
             unread: (q.unread || 0) + 1, 
             message: msgText,
             time: typeof message === 'object' && message?.createdAt ? message.createdAt : new Date().toISOString(),
-            messages: alreadyExists ? history : [...history, typeof message === 'string' ? { text: message, sender: 'customer', time: new Date().toISOString(), createdAt: new Date().toISOString() } : message],
-            highlight: query?.highlight || false
+            messages: alreadyExists ? history : [...history, typeof message === 'string' ? { text: message, sender: 'customer', time: new Date().toISOString(), createdAt: new Date().toISOString() } : message]
           };
         });
       });
@@ -533,7 +532,7 @@ export const AppProvider = ({ children }) => {
     if (assignGroupId) {
       setQueries((prev) =>
         prev.map((q) =>
-          q.id === queryId ? { ...q, assignedToGroup: assignGroupId, assignedTo: null, status: "open", highlight: false } : q
+          q.id === queryId ? { ...q, assignedToGroup: assignGroupId, assignedTo: null, status: "open" } : q
         )
       );
       setActivityLogs((prev) => [{
@@ -548,7 +547,7 @@ export const AppProvider = ({ children }) => {
     } else {
       setQueries((prev) =>
         prev.map((q) =>
-          q.id === queryId ? { ...q, assignedTo: currentUser?.id, assignedToGroup: null, status: "in_progress", unread: 0, highlight: false } : q
+          q.id === queryId ? { ...q, assignedTo: currentUser?.id, assignedToGroup: null, status: "in_progress", unread: 0 } : q
         )
       );
       setActivityLogs((prev) => [{
@@ -562,15 +561,6 @@ export const AppProvider = ({ children }) => {
       }
     }
   }, [currentUser, queries, backendOnline]);
-
-  const markQueryAsRead = useCallback(async (queryId) => {
-    setQueries((prev) =>
-      prev.map((q) => (q.id === queryId ? { ...q, unread: 0, highlight: false } : q))
-    );
-    if (backendOnline) {
-      try { await queriesAPI.markRead(queryId); } catch (err) { console.error(err.message); }
-    }
-  }, [backendOnline]);
 
   const transferQuery = useCallback(async (queryId, targetGroupId, targetAgentId) => {
     const q = queries.find((q) => q.id === queryId);
@@ -794,7 +784,6 @@ export const AppProvider = ({ children }) => {
       resetAgentPassword,
       agentGroups,
       createGroup,
-      markQueryAsRead,
       deleteGroup,
       updateGroup,
     }}>

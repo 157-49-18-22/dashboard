@@ -28,7 +28,7 @@ const getTimerLabel = (isoString) => {
 };
 
 const QueryList = () => {
-  const { getFilteredQueries, selectedQuery, setSelectedQuery, filterStatus, setFilterStatus, assignQuery, activeTab, markQueryAsRead } = useApp();
+  const { getFilteredQueries, selectedQuery, setSelectedQuery, filterStatus, setFilterStatus, assignQuery, activeTab } = useApp();
   const [searchText, setSearchText] = useState("");
   // Ticker forces re-render every 30s so relative time labels ("Xm ago") stay live
   const [, setTick] = useState(0);
@@ -46,10 +46,6 @@ const QueryList = () => {
 
   const handleSelectQuery = (query) => {
     setSelectedQuery(query);
-    // Mark as read to clear highlight
-    if (query.highlight) {
-      markQueryAsRead(query.id);
-    }
     // In Query Pool, do not auto-assign. Let the agent view and accept it manually.
     if (activeTab !== "pool" && !query.assignedTo) {
       assignQuery(query.id);
@@ -101,7 +97,7 @@ const QueryList = () => {
             return (
               <div
                 key={query.id}
-                className={`query-item ${selectedQuery?.id === query.id ? "selected" : ""} ${query.unread > 0 ? "has-unread" : ""} ${query.highlight ? "highlighted" : ""}`}
+                className={`query-item ${selectedQuery?.id === query.id ? "selected" : ""} ${query.unread > 0 ? "has-unread" : ""}`}
                 onClick={() => handleSelectQuery(query)}
               >
                 <div className="query-avatar">
