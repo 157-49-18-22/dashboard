@@ -3,7 +3,7 @@ import { useApp } from "../../context/AppContext";
 import { 
   ArrowLeft, CheckCircle, AlertCircle, Send, Smile, Phone, Tag, StickyNote, Search, Loader, User, Paperclip, FileText, Download, Reply, X, Forward
 } from "lucide-react";
-import { messagesAPI } from "../../services/api";
+import { messagesAPI, queriesAPI } from "../../services/api";
 import { getMessageType, getReplyPreviewText, buildReplyToPayload } from "./messageUtils";
 import "./ChatWindow.css";
 
@@ -31,6 +31,7 @@ const ChatWindow = () => {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [fetchedMessages, setFetchedMessages] = useState([]);
   const [replyingTo, setReplyingTo] = useState(null);
+  const [showPriorityMenu, setShowPriorityMenu] = useState(false);
   
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [transferType, setTransferType] = useState("department");
@@ -222,6 +223,22 @@ const ChatWindow = () => {
     setActiveTab("queries");
   };
 
+  const handleSetPriority = async (priority) => {
+    if (!query?.id) return;
+    try {
+      await queriesAPI.assign(query.id, query.assignedTo, query.assignedToGroup, query.status);
+      // Update priority via direct patch
+      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/queries/${query.id}/priority`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('crm_token')}` },
+        body: JSON.stringify({ priority })
+      });
+    } catch(e) {
+      console.error('Priority update failed:', e);
+    }
+    setShowPriorityMenu(false);
+  };
+
   const [timeLeft, setTimeLeft] = useState("");
 
   useEffect(() => {
@@ -332,8 +349,24 @@ const ChatWindow = () => {
           <button className="icon-btn" title="Internal Notes" onClick={() => setShowNotes(!showNotes)}>
             <StickyNote size={16} />
           </button>
-          <button className="icon-btn" title="Tag Priority">
+          <button className="icon-btn" title="Tag Priority" onClick={() => setShowPriorityMenu(p => !p)} style={{ position: 'relative' }}>
             <Tag size={16} />
+            {showPriorityMenu && (
+              <div className="priority-dropdown" onClick={e => e.stopPropagation()}>
+                <div className="pd-title">Set Priority</div>
+                {['low','medium','high','urgent'].map(p => (
+                  <button
+                    key={p}
+                    className={`pd-item pd-${p} ${query.priority === p ? 'active' : ''}`}
+                    onClick={() => handleSetPriority(p)}
+                  >
+                    {p === 'low' && '🟢'} {p === 'medium' && '🟡'} {p === 'high' && '🟠'} {p === 'urgent' && '🔴'}
+                    {p.charAt(0).toUpperCase() + p.slice(1)}
+                    {query.priority === p && ' ✓'}
+                  </button>
+                ))}
+              </div>
+            )}
           </button>
           {query.status !== "resolved" && (
             <>
