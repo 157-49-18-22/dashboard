@@ -108,6 +108,23 @@
 .sent-filters {
   display: flex;
   gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 8px; /* space for scrollbar */
+}
+
+/* Scrollbar styling for sent filters */
+.sent-filters::-webkit-scrollbar {
+  height: 6px;
+}
+.sent-filters::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sent-filters::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 10px;
+}
+.sent-filters::-webkit-scrollbar-thumb:hover {
+  background: #cbd5e1;
 }
 
 .pill-btn {
@@ -120,6 +137,8 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .pill-btn.active {
