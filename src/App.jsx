@@ -11,6 +11,7 @@ import Reports from "./components/Reports/Reports";
 import SentMessages from "./components/SentMessages/SentMessages";
 import LoginPage from "./components/LoginPage/LoginPage";
 import QueryPool from "./components/QueryPool/QueryPool";
+import AllChat from "./components/AllChat/AllChat";
 import "./App.css";
 
 const DashboardContent = ({ onLogout }) => {
@@ -35,6 +36,10 @@ const DashboardContent = ({ onLogout }) => {
             <ChatWindow />
           </div>
         </div>
+      )}
+
+      {activeTab === "all_chats" && (
+        <div className="main-content full-view"><AllChat /></div>
       )}
 
       {["pool", "department", "specific"].includes(activeTab) && (

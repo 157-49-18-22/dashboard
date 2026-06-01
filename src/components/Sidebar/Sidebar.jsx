@@ -1,12 +1,13 @@
 import { useApp } from "../../context/AppContext";
 import {
   MessageSquare, Inbox, Users, ClipboardList, BarChart2, Send,
-  Wifi, Zap, Bell, BellOff, LogOut, Volume2, VolumeX
+  Wifi, Zap, Bell, BellOff, LogOut, Volume2, VolumeX, Archive
 } from "lucide-react";
 import "./Sidebar.css";
 
 const navItems = [
   { id: "queries", label: "Queries", icon: MessageSquare },
+  { id: "all_chats", label: "All Chats (Read Only)", icon: Archive },
   { id: "pool", label: "Query Pool", icon: Inbox },
   { id: "specific", label: "Team Member Pool", icon: MessageSquare },
   { id: "department", label: "Department Pool", icon: Inbox },
@@ -33,7 +34,7 @@ const Sidebar = ({ onLogout }) => {
 
   const visibleNavItems = navItems.filter(item => {
     if (isAdmin) return true;
-    return ["queries", "pool", "specific", "department"].includes(item.id);
+    return ["queries", "all_chats", "pool", "specific", "department"].includes(item.id);
   });
 
   return (
