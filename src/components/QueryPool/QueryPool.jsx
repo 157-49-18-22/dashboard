@@ -4,9 +4,10 @@ import { Inbox, UserPlus, Clock, Sparkles, AlertTriangle, MessageSquare, Chevron
 import "./QueryPool.css";
 
 const priorityConfig = {
-  high: { color: "#ef4444", bg: "#fef2f2", label: "High" },
+  urgent: { color: "#dc2626", bg: "#fef2f2", label: "Urgent" },
+  high:   { color: "#ef4444", bg: "#fef2f2", label: "High" },
   medium: { color: "#f59e0b", bg: "#fffbeb", label: "Medium" },
-  low: { color: "#22c55e", bg: "#f0fdf4", label: "Low" },
+  low:    { color: "#22c55e", bg: "#f0fdf4", label: "Low" },
 };
 
 const getTimerLabel = (isoString) => {
@@ -112,7 +113,7 @@ const QueryPool = () => {
             </thead>
             <tbody>
               {poolQueries.map((query) => {
-                const pc = priorityConfig[query.priority || "medium"];
+                const pc = priorityConfig[query.priority] || priorityConfig.medium;
                 const isExpanded = !!expandedQueries[query.id];
                 const poolGroup = query.assignedToGroup ? agentGroups.find(g => g.id === query.assignedToGroup) : null;
 

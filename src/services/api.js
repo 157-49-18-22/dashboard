@@ -31,6 +31,8 @@ const request = async (endpoint, options = {}) => {
     if (res.status === 401) {
       clearToken();
       localStorage.removeItem("crm_user");
+      // Notify App.jsx that the session expired so it can redirect to login
+      window.dispatchEvent(new CustomEvent("auth:expired"));
     }
     throw new Error(data.message || "Request failed");
   }

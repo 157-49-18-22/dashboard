@@ -10,9 +10,10 @@ const statusConfig = {
 };
 
 const priorityConfig = {
-  high: { color: "#ef4444", label: "High" },
+  urgent: { color: "#dc2626", label: "Urgent" },
+  high:   { color: "#ef4444", label: "High" },
   medium: { color: "#f59e0b", label: "Med" },
-  low: { color: "#22c55e", label: "Low" },
+  low:    { color: "#22c55e", label: "Low" },
 };
 
 const formatTime = (isoString) => {
@@ -91,8 +92,8 @@ const QueryList = () => {
           </div>
         ) : (
           queries.map((query) => {
-            const sc = statusConfig[query.status];
-            const pc = priorityConfig[query.priority || "medium"];
+            const sc = statusConfig[query.status] || { bg: "#f3f4f6", text: "#6b7280", label: query.status };
+            const pc = priorityConfig[query.priority] || priorityConfig.medium;
             const StatusIcon = sc?.icon;
             return (
               <div

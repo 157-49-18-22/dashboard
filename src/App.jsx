@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AppProvider, useApp } from "./context/AppContext";
 import Sidebar from "./components/Sidebar/Sidebar";
 import QueryList from "./components/QueryList/QueryList";
@@ -76,6 +76,17 @@ const DashboardContent = ({ onLogout }) => {
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem("crm_token"));
+
+  // When token expires (401), api.js fires 'auth:expired' — catch it and go back to login
+  useEffect(() => {
+    const onExpired = () => {
+      localStorage.removeItem("crm_token");
+      localStorage.removeItem("crm_user");
+      setIsLoggedIn(false);
+    };
+    window.addEventListener("auth:expired", onExpired);
+    return () => window.removeEventListener("auth:expired", onExpired);
+  }, []);
 
   const handleLogin = (agent, token) => {
     setIsLoggedIn(true);
