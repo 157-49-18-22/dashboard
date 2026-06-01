@@ -43,7 +43,7 @@
   padding: 10px 18px;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 .date-input-container input {
@@ -65,7 +65,7 @@
   font-weight: 600;
   color: #475569;
   cursor: pointer;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   transition: all 0.2s;
 }
 
@@ -103,7 +103,7 @@
   background: white;
   border-radius: 18px;
   border: 1px solid #e2e8f0;
-  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
   overflow: hidden;
 }
 
@@ -171,10 +171,19 @@
   font-size: 14px;
 }
 
-.stat-pill.message { background: #e0e7ff; color: #4338ca; }
-.stat-pill.success { background: #dcfce7; color: #15803d; }
+.stat-pill.message {
+  background: #e0e7ff;
+  color: #4338ca;
+}
 
-.text-right { text-align: right; }
+.stat-pill.success {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.text-right {
+  text-align: right;
+}
 
 .btn-view {
   background: #0f172a;
@@ -199,7 +208,10 @@
 /* Modal Styling */
 .modal-overlay {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: rgba(15, 23, 42, 0.7);
   backdrop-filter: blur(8px);
   display: flex;
@@ -218,7 +230,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
 .modal-header {
@@ -229,8 +241,15 @@
   align-items: center;
 }
 
-.modal-header h2 { font-size: 20px; color: #0f172a; }
-.modal-header p { font-size: 13px; color: #64748b; }
+.modal-header h2 {
+  font-size: 20px;
+  color: #0f172a;
+}
+
+.modal-header p {
+  font-size: 13px;
+  color: #64748b;
+}
 
 .btn-back {
   background: none;
@@ -290,7 +309,11 @@
   margin-bottom: 12px;
 }
 
-.log-timestamp { font-size: 13px; font-weight: 800; color: #94a3b8; }
+.log-timestamp {
+  font-size: 13px;
+  font-weight: 800;
+  color: #94a3b8;
+}
 
 .log-tag {
   font-size: 11px;
@@ -299,11 +322,26 @@
   padding: 3px 10px;
   border-radius: 99px;
 }
-.log-tag.message { background: #e0e7ff; color: #4338ca; }
-.log-tag.resolved { background: #dcfce7; color: #15803d; }
-.log-tag.assigned { background: #fef3c7; color: #92400e; }
 
-.log-card-body p { margin-bottom: 6px; font-size: 15px; }
+.log-tag.message {
+  background: #e0e7ff;
+  color: #4338ca;
+}
+
+.log-tag.resolved {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.log-tag.assigned {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.log-card-body p {
+  margin-bottom: 6px;
+  font-size: 15px;
+}
 
 .log-details-preview {
   background: #f8fafc;
@@ -350,32 +388,72 @@
   gap: 12px;
 }
 
-.log-msg-wrap { display: flex; width: 100%; }
-.log-msg-wrap.customer { justify-content: flex-start; }
-.log-msg-wrap.agent { justify-content: flex-end; }
+.log-msg-wrap {
+  display: flex;
+  width: 100%;
+}
+
+.log-msg-wrap.customer {
+  justify-content: flex-start;
+}
+
+.log-msg-wrap.agent {
+  justify-content: flex-end;
+}
 
 .log-bubble {
   max-width: 80%;
   padding: 12px 16px;
   border-radius: 16px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
-.customer .log-bubble { background: white; border: 1px solid #e2e8f0; }
-.agent .log-bubble { background: #6366f1; color: white; }
+.customer .log-bubble {
+  background: white;
+  border: 1px solid #e2e8f0;
+}
 
-.log-bubble p { margin: 0; font-size: 14px; line-height: 1.5; }
-.log-time { font-size: 10px; opacity: 0.6; display: block; text-align: right; margin-top: 6px; }
+.agent .log-bubble {
+  background: #6366f1;
+  color: white;
+}
 
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.log-bubble p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.log-time {
+  font-size: 10px;
+  opacity: 0.6;
+  display: block;
+  text-align: right;
+  margin-top: 6px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
 
 .spin {
   animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Tablet */

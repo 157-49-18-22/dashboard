@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Plus, Edit2, Trash2, X, Search, Phone } from "lucide-react";
 import "./ContactBook.css";
 
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 const ContactBook = () => {
   const [contacts, setContacts] = useState([]);
   const [filteredContacts, setFilteredContacts] = useState([]);
@@ -21,7 +23,7 @@ const ContactBook = () => {
 
   const fetchContacts = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/contacts");
+      const res = await fetch(`${API_BASE}/contacts`);
       const data = await res.json();
       if (data.success) {
         setContacts(data.data);
@@ -68,7 +70,7 @@ const ContactBook = () => {
     if (!window.confirm("This will read the 'PARENT MOBILE NO.xlsx' file from public folder and import new contacts. Continue?")) return;
     setIsSyncing(true);
     try {
-      const res = await fetch("http://localhost:5000/api/contacts/import", { method: "POST" });
+      const res = await fetch(`${API_BASE}/contacts/import`, { method: "POST" });
       const data = await res.json();
       if (data.success) {
         setSuccess(data.message);
@@ -99,7 +101,7 @@ const ContactBook = () => {
     try {
       if (editingContact) {
         // Handle Edit
-        const res = await fetch(`http://localhost:5000/api/contacts/${editingContact.id}`, {
+        const res = await fetch(`${API_BASE}/contacts/${editingContact.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name: newName, mobileNo: newMobile })
@@ -114,7 +116,7 @@ const ContactBook = () => {
         }
       } else {
         // Handle Add
-        const res = await fetch("http://localhost:5000/api/contacts", {
+        const res = await fetch(`${API_BASE}/contacts`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name: newName, mobileNo: newMobile })
@@ -136,7 +138,7 @@ const ContactBook = () => {
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this contact?")) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/contacts/${id}`, { method: "DELETE" });
+      const res = await fetch(`${API_BASE}/contacts/${id}`, { method: "DELETE" });
       const data = await res.json();
       if (data.success) {
         fetchContacts();
