@@ -248,6 +248,7 @@ export const AppProvider = ({ children }) => {
           return { 
             ...q,
             ...(query && query.priority ? { priority: query.priority } : {}),
+            ...(query && query.name ? { name: query.name } : {}),
             unread: (q.unread || 0) + 1, 
             message: msgText,
             time: typeof message === 'object' && message?.createdAt ? message.createdAt : new Date().toISOString(),

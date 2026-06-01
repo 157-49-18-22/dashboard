@@ -12,6 +12,7 @@ import SentMessages from "./components/SentMessages/SentMessages";
 import LoginPage from "./components/LoginPage/LoginPage";
 import QueryPool from "./components/QueryPool/QueryPool";
 import AllChat from "./components/AllChat/AllChat";
+import ContactBook from "./components/ContactBook/ContactBook";
 import "./App.css";
 
 const DashboardContent = ({ onLogout }) => {
@@ -50,6 +51,9 @@ const DashboardContent = ({ onLogout }) => {
 
       {activeTab === "agents" && (
         <div className="main-content full-view"><AgentPanel /></div>
+      )}
+      {activeTab === "contacts" && (
+        <div className="main-content full-view"><ContactBook /></div>
       )}
       {activeTab === "activity" && (
         <div className="main-content full-view"><ActivityLog /></div>
