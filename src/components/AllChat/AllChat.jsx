@@ -89,7 +89,8 @@ const AllChat = () => {
     } finally {
       setLoadingMessages(false);
       setTimeout(() => {
-        if (messagesEndRef.current) messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        const container = document.querySelector('.ac-messages');
+        if (container) container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
       }, 100);
     }
   };
@@ -137,7 +138,8 @@ const AllChat = () => {
       }]);
       setReplyText("");
       setTimeout(() => {
-        if (messagesEndRef.current) messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        const container = document.querySelector('.ac-messages');
+        if (container) container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
       }, 100);
     } catch (err) {
       alert("Failed to send reply");
