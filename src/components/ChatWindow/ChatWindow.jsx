@@ -61,7 +61,8 @@ const ChatWindow = () => {
     setReplyingTo(null);
   }, [query?.id]);
 
-  const canReply = query?.assignedTo === currentUser?.id && query?.status !== "resolved";
+  const isAdmin = currentUser?.role?.toLowerCase().includes("admin") || currentUser?.role?.toLowerCase().includes("senior");
+  const canReply = (query?.assignedTo === currentUser?.id || isAdmin) && query?.status !== "resolved";
 
   const renderQuotedBlock = (msg) => {
     if (!msg.replyToText && !msg.replyToMessageId) return null;
@@ -492,7 +493,7 @@ const ChatWindow = () => {
             </button>
           </div>
         </div>
-      ) : query.assignedTo !== currentUser?.id ? (
+      ) : (query.assignedTo !== currentUser?.id && !isAdmin) ? (
         <div className="assigned-elsewhere-banner">
           <div className="assigned-elsewhere-content">
             <User size={20} className="assigned-icon" />

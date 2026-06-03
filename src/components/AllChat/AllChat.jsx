@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { queriesAPI, messagesAPI } from "../../services/api";
-import { Search, Loader2, MessageSquare, User, CheckCircle2, Clock, X, ZoomIn, Send } from "lucide-react";
+import { Search, Loader2, MessageSquare, User, CheckCircle2, Clock, X, ZoomIn, Send, Reply } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import "./AllChat.css";
-
+import { getMessageType, getReplyPreviewText, buildReplyToPayload } from "../ChatWindow/messageUtils";
 const AllChat = () => {
   const [queries, setQueries] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -22,6 +22,7 @@ const AllChat = () => {
   const isAdmin = currentUser?.role?.toLowerCase().includes("admin") || currentUser?.role?.toLowerCase().includes("senior");
   const [chatFilter, setChatFilter] = useState("all");
   const [replyText, setReplyText] = useState("");
+  const [replyingTo, setReplyingTo] = useState(null);
   const [sending, setSending] = useState(false);
 
   const messagesEndRef = useRef(null);
@@ -79,6 +80,7 @@ const AllChat = () => {
     setMsgLimit(30);
     setLoadingMessages(true);
     setMessages([]);
+    setReplyingTo(null);
     try {
       const res = await messagesAPI.getByQuery(q.id);
       if (res && res.messages) {
@@ -108,6 +110,34 @@ const AllChat = () => {
     return <span className="stat-badge open">Open</span>
   }
 
+  const renderQuotedBlock = (msg) => {
+    if (!msg.replyToText && !msg.replyToMessageId) return null;
+    const isCustomer = msg.replyToSender === "customer";
+    const previewType = msg.replyToMessageType || "text";
+    const isImageQuote = previewType === "image" && msg.replyToText?.startsWith("http");
+    return (
+      <div
+        className={`quoted-message ${isCustomer ? "quoted-customer" : "quoted-agent"}`}
+        role="button"
+        tabIndex={0}
+        onClick={() => {
+          const el = document.getElementById(`ac-msg-${msg.replyToMessageId}`);
+          el?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }}
+        onKeyDown={(e) => e.key === "Enter" && document.getElementById(`ac-msg-${msg.replyToMessageId}`)?.scrollIntoView({ behavior: "smooth", block: "center" })}
+      >
+        <span className="quoted-author">{isCustomer ? selectedQuery?.name || "Customer" : "You"}</span>
+        {isImageQuote ? (
+          <img src={msg.replyToText} alt="" className="quoted-thumb" />
+        ) : (
+          <span className="quoted-text">
+            {previewType === "image" ? "Photo" : previewType === "document" ? "Document" : msg.replyToText}
+          </span>
+        )}
+      </div>
+    );
+  };
+
   const handleReassign = async (agentId) => {
     if (!selectedQuery) return;
     try {
@@ -126,17 +156,23 @@ const AllChat = () => {
   const handleSendReply = async () => {
     if (!replyText.trim() || !selectedQuery) return;
     setSending(true);
+    const replyTo = replyingTo ? buildReplyToPayload(replyingTo) : undefined;
     try {
-      await sendMessage(selectedQuery.id, { text: replyText, messageType: "text" });
+      await sendMessage(selectedQuery.id, { text: replyText, messageType: "text", replyTo });
       setMessages(prev => [...prev, {
         id: Date.now(),
         sender: "agent",
         agentName: currentUser?.name || "Admin",
         text: replyText,
         time: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }),
-        messageType: "text"
+        messageType: "text",
+        replyToText: replyTo?.text,
+        replyToSender: replyTo?.sender,
+        replyToMessageType: replyTo?.messageType,
+        replyToMessageId: replyTo?.messageId
       }]);
       setReplyText("");
+      setReplyingTo(null);
       setTimeout(() => {
         const container = document.querySelector('.ac-messages');
         if (container) container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
@@ -262,9 +298,21 @@ const AllChat = () => {
                     const mediaUrl = isMedia ? msg.text : null;
 
                     return (
-                      <div key={msg.id} className={`msg-bubble ${isAgent ? 'agent-msg' : 'user-msg'}`}>
+                      <div key={msg.id} id={`ac-msg-${msg.id}`} className={`msg-bubble ${isAgent ? 'agent-msg' : 'user-msg'}`} style={{ position: 'relative' }}>
+                        {isAdmin && (
+                          <button
+                            type="button"
+                            className="message-reply-btn"
+                            title="Reply"
+                            style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', [isAgent ? 'left' : 'right']: '-30px', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', opacity: 0.7 }}
+                            onClick={() => setReplyingTo(msg)}
+                          >
+                            <Reply size={14} />
+                          </button>
+                        )}
                         {isAgent && <span className="agent-tag">{msg.agentName || 'Agent'}</span>}
                         <div className="msg-box">
+                          {renderQuotedBlock(msg)}
                           {isImage ? (
                             <div className="media-img-wrap" onClick={() => setLightboxImg(mediaUrl)}>
                               <img
@@ -299,23 +347,40 @@ const AllChat = () => {
             </div>
 
             {isAdmin ? (
-              <div className="ac-chat-footer admin-reply-footer" style={{ display: 'flex', gap: '10px', alignItems: 'center', padding: '10px', background: '#fff', borderTop: '1px solid #e2e8f0' }}>
-                <input 
-                  type="text" 
-                  value={replyText} 
-                  onChange={(e) => setReplyText(e.target.value)} 
-                  onKeyDown={(e) => e.key === 'Enter' && handleSendReply()}
-                  placeholder="Type a reply as admin..." 
-                  style={{ flex: 1, padding: '10px', border: '1px solid #e2e8f0', borderRadius: '8px', outline: 'none' }}
-                />
-                <button 
-                  onClick={handleSendReply} 
-                  disabled={!replyText.trim() || sending}
-                  style={{ background: '#25d366', color: '#fff', border: 'none', padding: '10px 14px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
-                >
-                  <Send size={16} />
-                  {sending ? "Sending..." : "Send"}
-                </button>
+              <div className="ac-chat-footer admin-reply-footer" style={{ display: 'flex', flexDirection: 'column', padding: '10px', background: '#fff', borderTop: '1px solid #e2e8f0' }}>
+                {replyingTo && (
+                  <div className="ac-reply-preview-bar" style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '6px 10px', background: '#f8fafc', borderRadius: '8px', marginBottom: '8px', borderLeft: '4px solid #6366f1' }}>
+                    <div style={{ flex: 1, overflow: 'hidden' }}>
+                      <span style={{ display: 'block', fontSize: '11px', color: '#6366f1', fontWeight: 'bold' }}>
+                        Replying to {replyingTo.sender === "customer" ? selectedQuery.name : "yourself"}
+                      </span>
+                      <span style={{ display: 'block', fontSize: '12px', color: '#475569', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {getReplyPreviewText(replyingTo)}
+                      </span>
+                    </div>
+                    <button type="button" onClick={() => setReplyingTo(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}>
+                      <X size={16} />
+                    </button>
+                  </div>
+                )}
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', width: '100%' }}>
+                  <input 
+                    type="text" 
+                    value={replyText} 
+                    onChange={(e) => setReplyText(e.target.value)} 
+                    onKeyDown={(e) => e.key === 'Enter' && handleSendReply()}
+                    placeholder={replyingTo ? "Type your reply..." : "Type a reply as admin..."}
+                    style={{ flex: 1, padding: '10px', border: '1px solid #e2e8f0', borderRadius: '8px', outline: 'none' }}
+                  />
+                  <button 
+                    onClick={handleSendReply} 
+                    disabled={!replyText.trim() || sending}
+                    style={{ background: '#25d366', color: '#fff', border: 'none', padding: '10px 14px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <Send size={16} />
+                    {sending ? "Sending..." : "Send"}
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="ac-chat-footer">
