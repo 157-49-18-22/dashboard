@@ -286,6 +286,66 @@
 .send-btn.sending { animation: spin 0.4s linear; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 .input-hint { font-size: 10px; color: #a0aec0; text-align: right; margin-top: 4px; }
+
+/* Paste Image Preview Bar */
+.paste-preview-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #f0fdf4;
+  border: 1.5px solid #86efac;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  animation: slideIn 0.2s ease-out;
+}
+.paste-preview-thumb {
+  width: 52px;
+  height: 52px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1.5px solid #bbf7d0;
+  flex-shrink: 0;
+}
+.paste-preview-info {
+  flex: 1;
+  font-size: 13px;
+  color: #166534;
+  font-weight: 600;
+}
+.paste-preview-send {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #25d366, #128c7e);
+  border: none;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.paste-preview-send:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37,211,102,0.4);
+}
+.paste-preview-send:disabled { opacity: 0.5; cursor: not-allowed; }
+.paste-preview-cancel {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  border-radius: 6px;
+  transition: all 0.15s;
+}
+.paste-preview-cancel:hover { background: #fee2e2; color: #dc2626; }
 .resolved-banner { padding: 14px; background: #d1e7dd; border-top: 1px solid #b7ebce; color: #0a3622; font-size: 13px; font-weight: 700; text-align: center; flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 6px; }
 
 @media (max-width: 768px) {

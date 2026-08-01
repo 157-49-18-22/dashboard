@@ -24,6 +24,7 @@ const AllChat = () => {
   const [replyText, setReplyText] = useState("");
   const [replyingTo, setReplyingTo] = useState(null);
   const [sending, setSending] = useState(false);
+  const [pastedImage, setPastedImage] = useState(null); // { file, previewUrl }
 
   const messagesEndRef = useRef(null);
 
@@ -179,6 +180,58 @@ const AllChat = () => {
       }, 100);
     } catch (err) {
       alert("Failed to send reply");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  // Handle Ctrl+V image paste
+  const handlePaste = (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.startsWith("image/")) {
+        e.preventDefault();
+        const file = items[i].getAsFile();
+        if (!file) return;
+        const previewUrl = URL.createObjectURL(file);
+        setPastedImage({ file, previewUrl });
+        return;
+      }
+    }
+  };
+
+  const handleSendPastedImage = async () => {
+    if (!pastedImage || !selectedQuery) return;
+    setSending(true);
+    try {
+      const { messagesAPI } = await import("../../services/api");
+      const uploadRes = await messagesAPI.uploadAttachment(pastedImage.file);
+      const replyTo = replyingTo ? buildReplyToPayload(replyingTo) : undefined;
+      await sendMessage(selectedQuery.id, {
+        text: "",
+        messageType: "image",
+        attachmentUrl: uploadRes.attachmentUrl,
+        fileName: uploadRes.fileName,
+        replyTo,
+      });
+      setMessages(prev => [...prev, {
+        id: Date.now(),
+        sender: "agent",
+        agentName: currentUser?.name || "Admin",
+        text: uploadRes.attachmentUrl,
+        time: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }),
+        messageType: "image",
+      }]);
+      setReplyingTo(null);
+      URL.revokeObjectURL(pastedImage.previewUrl);
+      setPastedImage(null);
+      setTimeout(() => {
+        const container = document.querySelector('.ac-messages');
+        if (container) container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+      }, 100);
+    } catch (err) {
+      alert("Pasted image upload failed");
     } finally {
       setSending(false);
     }
@@ -348,6 +401,28 @@ const AllChat = () => {
 
             {isAdmin ? (
               <div className="ac-chat-footer admin-reply-footer" style={{ display: 'flex', flexDirection: 'column', padding: '10px', background: '#fff', borderTop: '1px solid #e2e8f0' }}>
+                {/* Pasted Image Preview */}
+                {pastedImage && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', background: '#f0fdf4', borderRadius: '8px', marginBottom: '8px', border: '1px solid #bbf7d0' }}>
+                    <img src={pastedImage.previewUrl} alt="Pasted" style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #d1fae5' }} />
+                    <span style={{ flex: 1, fontSize: '13px', color: '#166534' }}>📋 Pasted image ready to send</span>
+                    <button
+                      type="button"
+                      onClick={handleSendPastedImage}
+                      disabled={sending}
+                      style={{ background: '#25d366', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}
+                    >
+                      <Send size={14} /> {sending ? "Uploading..." : "Send Image"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { URL.revokeObjectURL(pastedImage.previewUrl); setPastedImage(null); }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                )}
                 {replyingTo && (
                   <div className="ac-reply-preview-bar" style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '6px 10px', background: '#f8fafc', borderRadius: '8px', marginBottom: '8px', borderLeft: '4px solid #6366f1' }}>
                     <div style={{ flex: 1, overflow: 'hidden' }}>
@@ -369,7 +444,8 @@ const AllChat = () => {
                     value={replyText} 
                     onChange={(e) => setReplyText(e.target.value)} 
                     onKeyDown={(e) => e.key === 'Enter' && handleSendReply()}
-                    placeholder={replyingTo ? "Type your reply..." : "Type a reply as admin..."}
+                    onPaste={handlePaste}
+                    placeholder={replyingTo ? "Type your reply..." : "Type a reply as admin... (Ctrl+V = paste image)"}
                     style={{ flex: 1, padding: '10px', border: '1px solid #e2e8f0', borderRadius: '8px', outline: 'none' }}
                   />
                   <button 

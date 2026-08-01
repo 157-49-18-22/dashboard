@@ -32,6 +32,7 @@ const ChatWindow = () => {
   const [fetchedMessages, setFetchedMessages] = useState([]);
   const [replyingTo, setReplyingTo] = useState(null);
   const [showPriorityMenu, setShowPriorityMenu] = useState(false);
+  const [pastedImage, setPastedImage] = useState(null); // { file, previewUrl }
   
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [transferType, setTransferType] = useState("department");
@@ -209,6 +210,45 @@ const ChatWindow = () => {
       alert(err.message || "Attachment upload failed");
     } finally {
       e.target.value = "";
+      setUploading(false);
+    }
+  };
+
+  // Handle Ctrl+V image paste in textarea
+  const handlePaste = (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.startsWith("image/")) {
+        e.preventDefault();
+        const file = items[i].getAsFile();
+        if (!file) return;
+        const previewUrl = URL.createObjectURL(file);
+        setPastedImage({ file, previewUrl });
+        return;
+      }
+    }
+  };
+
+  const handleSendPastedImage = async () => {
+    if (!pastedImage || !query) return;
+    setUploading(true);
+    try {
+      const uploadRes = await messagesAPI.uploadAttachment(pastedImage.file);
+      const replyTo = replyingTo ? buildReplyToPayload(replyingTo) : undefined;
+      await sendMessage(query.id, {
+        text: "",
+        messageType: "image",
+        attachmentUrl: uploadRes.attachmentUrl,
+        fileName: uploadRes.fileName,
+        replyTo,
+      });
+      setReplyingTo(null);
+      URL.revokeObjectURL(pastedImage.previewUrl);
+      setPastedImage(null);
+    } catch (err) {
+      alert(err.message || "Pasted image upload failed");
+    } finally {
       setUploading(false);
     }
   };
@@ -505,6 +545,30 @@ const ChatWindow = () => {
         </div>
       ) : query.status !== "resolved" ? (
         <div className="chat-input-area">
+          {/* Pasted Image Preview */}
+          {pastedImage && (
+            <div className="paste-preview-bar">
+              <img src={pastedImage.previewUrl} alt="Pasted" className="paste-preview-thumb" />
+              <div className="paste-preview-info">
+                <span>📋 Pasted image ready to send</span>
+              </div>
+              <button
+                type="button"
+                className="paste-preview-send"
+                onClick={handleSendPastedImage}
+                disabled={uploading}
+              >
+                {uploading ? "Uploading..." : <><Send size={14} /> Send Image</>}
+              </button>
+              <button
+                type="button"
+                className="paste-preview-cancel"
+                onClick={() => { URL.revokeObjectURL(pastedImage.previewUrl); setPastedImage(null); }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+          )}
           {replyingTo && (
             <div className="reply-preview-bar">
               <div className="reply-preview-accent" />
@@ -539,14 +603,15 @@ const ChatWindow = () => {
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={replyingTo ? "Type your reply..." : "Type a reply... (Enter to send)"}
+              onPaste={handlePaste}
+              placeholder={replyingTo ? "Type your reply..." : "Type a reply... (Enter to send, Ctrl+V = paste image)"}
               rows={1}
             />
             <button className={`send-btn ${sending ? "sending" : ""}`} onClick={() => handleSend()} disabled={!inputText.trim() || uploading}>
               <Send size={16} />
             </button>
           </div>
-          <div className="input-hint">Enter = Send &nbsp;•&nbsp; Shift+Enter = New line &nbsp;•&nbsp; 📎 = Attachment</div>
+          <div className="input-hint">Enter = Send &nbsp;•&nbsp; Shift+Enter = New line &nbsp;•&nbsp; 📎 = Attach &nbsp;•&nbsp; Ctrl+V = Paste Image</div>
         </div>
       ) : (
         <div className="resolved-banner"><CheckCircle size={16} /> This query has been resolved</div>
