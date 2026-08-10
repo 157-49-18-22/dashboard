@@ -40,6 +40,7 @@ const ChatWindow = () => {
   const [visibleSessionsCount, setVisibleSessionsCount] = useState(1);
 
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
   const fileInputRef = useRef(null);
 
   const query = queries.find((q) => q.id === selectedQuery?.id);
@@ -87,9 +88,9 @@ const ChatWindow = () => {
         tabIndex={0}
         onClick={() => {
           const el = document.getElementById(`msg-${msg.replyToMessageId}`);
-          el?.scrollIntoView({ behavior: "smooth", block: "center" });
+          el?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
         }}
-        onKeyDown={(e) => e.key === "Enter" && document.getElementById(`msg-${msg.replyToMessageId}`)?.scrollIntoView({ behavior: "smooth", block: "center" })}
+        onKeyDown={(e) => e.key === "Enter" && document.getElementById(`msg-${msg.replyToMessageId}`)?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" })}
       >
         <span className="quoted-author">{isCustomer ? query?.name || "Customer" : "You"}</span>
         {isImageQuote ? (
@@ -172,7 +173,13 @@ const ChatWindow = () => {
 
   const lastMessageId = messages.length > 0 ? messages[messages.length - 1].id : null;
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Scroll only inside messages panel — never the whole page (that was cutting off the top header)
+    const container = messagesContainerRef.current;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    } else {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+    }
   }, [lastMessageId]);
 
   // Handle direct reply sending (Calls /whatsapp-message directly)
@@ -436,7 +443,7 @@ const ChatWindow = () => {
 
       <div className="chat-body">
         {/* Messages */}
-        <div className="messages-container">
+        <div className="messages-container" ref={messagesContainerRef}>
           <div className="date-divider"><span>Today</span></div>
           {totalSessions > visibleSessionsCount && (
              <div style={{ textAlign: 'center', marginBottom: '10px' }}>

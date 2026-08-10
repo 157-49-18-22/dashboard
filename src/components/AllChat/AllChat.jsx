@@ -159,9 +159,9 @@ const AllChat = () => {
         tabIndex={0}
         onClick={() => {
           const el = document.getElementById(`ac-msg-${msg.replyToMessageId}`);
-          el?.scrollIntoView({ behavior: "smooth", block: "center" });
+          el?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
         }}
-        onKeyDown={(e) => e.key === "Enter" && document.getElementById(`ac-msg-${msg.replyToMessageId}`)?.scrollIntoView({ behavior: "smooth", block: "center" })}
+        onKeyDown={(e) => e.key === "Enter" && document.getElementById(`ac-msg-${msg.replyToMessageId}`)?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" })}
       >
         <span className="quoted-author">{isCustomer ? selectedQuery?.name || "Customer" : "You"}</span>
         {isImageQuote ? (
