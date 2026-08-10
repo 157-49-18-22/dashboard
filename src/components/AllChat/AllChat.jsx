@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { queriesAPI, messagesAPI } from "../../services/api";
+import { getSocket } from "../../services/socket";
 import { Search, Loader2, MessageSquare, User, CheckCircle2, Clock, X, ZoomIn, Send, Reply } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import "./AllChat.css";
@@ -83,7 +84,7 @@ const AllChat = () => {
     setMessages([]);
     setReplyingTo(null);
     try {
-      const res = await messagesAPI.getByQuery(q.id);
+      const res = await messagesAPI.getByQuery(q.id, { limit: 80 });
       if (res && res.messages) {
         setMessages(res.messages);
       }
@@ -97,6 +98,41 @@ const AllChat = () => {
       }, 100);
     }
   };
+
+  // Live append for open AllChat thread (same as main chat)
+  useEffect(() => {
+    if (!selectedQuery?.id) return;
+    const socket = getSocket();
+    if (!socket) return;
+
+    const onNew = (msg) => {
+      if (msg.queryId !== selectedQuery.id) return;
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === msg.id)) return prev;
+        const cleaned = prev.filter((m) => {
+          const isOptimistic =
+            m.sender === msg.sender &&
+            m.text === msg.text &&
+            typeof m.id === "number" &&
+            m.id > 1000000000000;
+          return !isOptimistic;
+        });
+        return [...cleaned, msg];
+      });
+    };
+
+    const onIncoming = ({ queryId, message }) => {
+      if (queryId !== selectedQuery.id || !message) return;
+      onNew(typeof message === "object" ? message : { id: Date.now(), text: message, sender: "customer", queryId });
+    };
+
+    socket.on("message:new", onNew);
+    socket.on("query:newIncoming", onIncoming);
+    return () => {
+      socket.off("message:new", onNew);
+      socket.off("query:newIncoming", onIncoming);
+    };
+  }, [selectedQuery?.id]);
 
   const handleLoadMoreMsgs = () => {
     setMsgLimit(prev => prev + 30);
@@ -156,29 +192,34 @@ const AllChat = () => {
 
   const handleSendReply = async () => {
     if (!replyText.trim() || !selectedQuery) return;
-    setSending(true);
+    const text = replyText;
     const replyTo = replyingTo ? buildReplyToPayload(replyingTo) : undefined;
+    const optimistic = {
+      id: Date.now(),
+      sender: "agent",
+      agentName: currentUser?.name || "Admin",
+      text,
+      time: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }),
+      createdAt: new Date().toISOString(),
+      messageType: "text",
+      replyToText: replyTo?.text,
+      replyToSender: replyTo?.sender,
+      replyToMessageType: replyTo?.messageType,
+      replyToMessageId: replyTo?.messageId,
+    };
+    setMessages((prev) => [...prev, optimistic]);
+    setReplyText("");
+    setReplyingTo(null);
+    setSending(true);
     try {
-      await sendMessage(selectedQuery.id, { text: replyText, messageType: "text", replyTo });
-      setMessages(prev => [...prev, {
-        id: Date.now(),
-        sender: "agent",
-        agentName: currentUser?.name || "Admin",
-        text: replyText,
-        time: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }),
-        messageType: "text",
-        replyToText: replyTo?.text,
-        replyToSender: replyTo?.sender,
-        replyToMessageType: replyTo?.messageType,
-        replyToMessageId: replyTo?.messageId
-      }]);
-      setReplyText("");
-      setReplyingTo(null);
+      await sendMessage(selectedQuery.id, { text, messageType: "text", replyTo });
       setTimeout(() => {
         const container = document.querySelector('.ac-messages');
         if (container) container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
-      }, 100);
+      }, 50);
     } catch (err) {
+      setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
+      setReplyText(text);
       alert("Failed to send reply");
     } finally {
       setSending(false);

@@ -77,7 +77,12 @@ export const queriesAPI = {
 
 // ── Messages ───────────────────────────────────────────────────
 export const messagesAPI = {
-  getByQuery: (queryId) => request(`/queries/${queryId}/messages`),
+  getByQuery: (queryId, params = {}) => {
+    const qs = new URLSearchParams();
+    if (params.limit) qs.set("limit", params.limit);
+    const query = qs.toString();
+    return request(`/queries/${queryId}/messages${query ? `?${query}` : ""}`);
+  },
   send: (queryId, payload) =>
     request(`/queries/${queryId}/messages`, {
       method: "POST",

@@ -44,18 +44,28 @@ const ChatWindow = () => {
 
   const query = queries.find((q) => q.id === selectedQuery?.id);
 
-  // Load messages from backend when query is selected
+  // Load recent messages only (not entire history) so heavy chats open instantly
   useEffect(() => {
     if (!query?.id || !backendOnline) {
       setFetchedMessages([]);
       return;
     }
     setVisibleSessionsCount(1);
-    setLoadingMessages(true);
-    messagesAPI.getByQuery(query.id)
-      .then((res) => setFetchedMessages(res.messages || []))
-      .catch(() => setFetchedMessages([]))
-      .finally(() => setLoadingMessages(false));
+    // Keep showing optimistic/state messages while fetch runs — don't blank the chat
+    const hasLocal = (query.messages || []).length > 0;
+    if (!hasLocal) setLoadingMessages(true);
+    let cancelled = false;
+    messagesAPI.getByQuery(query.id, { limit: 80 })
+      .then((res) => {
+        if (!cancelled) setFetchedMessages(res.messages || []);
+      })
+      .catch(() => {
+        if (!cancelled) setFetchedMessages([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingMessages(false);
+      });
+    return () => { cancelled = true; };
   }, [query?.id, backendOnline]);
 
   useEffect(() => {
@@ -169,15 +179,17 @@ const ChatWindow = () => {
   const handleSend = async (text) => {
     const msg = text || inputText;
     if (!msg.trim() || !query) return;
-    setSending(true);
     const replyTo = replyingTo ? buildReplyToPayload(replyingTo) : undefined;
+    // Clear input immediately so chat feels instant (optimistic bubble comes from AppContext)
+    setInputText("");
+    setReplyingTo(null);
+    setShowQuickReplies(false);
+    setSending(true);
     try {
       await sendMessage(query.id, { text: msg, messageType: "text", replyTo });
-      setInputText("");
-      setReplyingTo(null);
-      setShowQuickReplies(false);
     } catch (err) {
       console.error("Direct send failed:", err);
+      setInputText(msg);
       alert(err.message || "Failed to send message. Please ensure Alponix active plan is configured.");
     } finally {
       setSending(false);
@@ -442,7 +454,7 @@ const ChatWindow = () => {
                 </button>
              </div>
           )}
-          {loadingMessages ? (
+          {loadingMessages && messages.length === 0 ? (
             <div style={{ display: 'flex', justifyContent: 'center', padding: '30px', color: '#94a3b8' }}>
               <Loader size={20} className="spin" /> &nbsp; Loading messages...
             </div>

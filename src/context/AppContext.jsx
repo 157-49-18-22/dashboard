@@ -330,7 +330,7 @@ export const AppProvider = ({ children }) => {
           
           return {
             ...q, 
-            message: msg.text,
+            message: msg.messageType === "image" ? "[Image]" : msg.messageType === "document" ? "[Document]" : msg.text,
             time: msg.createdAt || new Date().toISOString(),
             messages: [...cleanedMessages, msg],
             unread: msg.sender === "customer" ? (q.unread || 0) + 1 : q.unread
@@ -345,6 +345,16 @@ export const AppProvider = ({ children }) => {
         }
         setTimeout(() => setNewMessageAlert(false), 3000);
       }
+    });
+
+    socket.on("query:updated", ({ queryId, lastMessage, time }) => {
+      setQueries((prev) =>
+        prev.map((q) =>
+          q.id === queryId
+            ? { ...q, message: lastMessage || q.message, time: time || q.time }
+            : q
+        )
+      );
     });
 
     // Auto-unlock shared AudioContext on first user interaction
