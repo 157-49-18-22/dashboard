@@ -80,6 +80,7 @@ export const messagesAPI = {
   getByQuery: (queryId, params = {}) => {
     const qs = new URLSearchParams();
     if (params.limit) qs.set("limit", params.limit);
+    if (params.beforeCreatedAt) qs.set("beforeCreatedAt", params.beforeCreatedAt);
     const query = qs.toString();
     return request(`/queries/${queryId}/messages${query ? `?${query}` : ""}`);
   },

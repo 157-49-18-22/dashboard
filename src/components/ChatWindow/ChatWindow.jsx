@@ -37,7 +37,9 @@ const ChatWindow = () => {
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [transferType, setTransferType] = useState("department");
   const [transferTarget, setTransferTarget] = useState("");
-  const [visibleSessionsCount, setVisibleSessionsCount] = useState(1);
+  const [hasMoreOlder, setHasMoreOlder] = useState(false);
+  const [nextCursor, setNextCursor] = useState(null);
+  const [loadingOlder, setLoadingOlder] = useState(false);
 
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
@@ -51,14 +53,20 @@ const ChatWindow = () => {
       setFetchedMessages([]);
       return;
     }
-    setVisibleSessionsCount(1);
+    setHasMoreOlder(false);
+    setNextCursor(null);
+    setLoadingOlder(false);
     // Keep showing optimistic/state messages while fetch runs — don't blank the chat
     const hasLocal = (query.messages || []).length > 0;
     if (!hasLocal) setLoadingMessages(true);
     let cancelled = false;
     messagesAPI.getByQuery(query.id, { limit: 80 })
       .then((res) => {
-        if (!cancelled) setFetchedMessages(res.messages || []);
+        if (!cancelled) {
+          setFetchedMessages(res.messages || []);
+          setHasMoreOlder(Boolean(res.hasMore));
+          setNextCursor(res.nextCursor || null);
+        }
       })
       .catch(() => {
         if (!cancelled) setFetchedMessages([]);
@@ -105,9 +113,9 @@ const ChatWindow = () => {
   };
 
   // Merge fetched messages with optimistic messages from state
-  const { messages, totalSessions } = (() => {
+  const { messages } = (() => {
     const stateMessages = query?.messages || [];
-    if (!backendOnline) return { messages: stateMessages, totalSessions: 1 };
+    if (!backendOnline) return { messages: stateMessages };
     
     const combined = [...fetchedMessages, ...stateMessages];
     
@@ -144,31 +152,7 @@ const ChatWindow = () => {
       }
     });
 
-    const sessions = [];
-    let currentSession = [];
-    for (let i = 0; i < unique.length; i++) {
-       if (i === 0) {
-          currentSession.push(unique[i]);
-       } else {
-          const prevDate = unique[i-1].createdAt ? new Date(unique[i-1].createdAt) : (typeof unique[i-1].id === 'number' ? new Date(unique[i-1].id) : new Date(unique[i-1].time || Date.now()));
-          const currDate = unique[i].createdAt ? new Date(unique[i].createdAt) : (typeof unique[i].id === 'number' ? new Date(unique[i].id) : new Date(unique[i].time || Date.now()));
-          const diffMs = currDate - prevDate;
-          if (diffMs > 30 * 60 * 1000) { // 30 mins
-             sessions.push(currentSession);
-             currentSession = [unique[i]];
-          } else {
-             currentSession.push(unique[i]);
-          }
-       }
-    }
-    if (currentSession.length > 0) sessions.push(currentSession);
-
-    const totSessions = sessions.length;
-    const slices = sessions.slice(Math.max(0, totSessions - visibleSessionsCount));
-    const displayMessages = [];
-    slices.forEach(s => displayMessages.push(...s));
-    
-    return { messages: displayMessages, totalSessions: totSessions };
+    return { messages: unique };
   })();
 
   const lastMessageId = messages.length > 0 ? messages[messages.length - 1].id : null;
@@ -269,6 +253,25 @@ const ChatWindow = () => {
       alert(err.message || "Pasted image upload failed");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const loadOlderMessages = async () => {
+    if (!query?.id || !backendOnline || !hasMoreOlder || !nextCursor || loadingOlder) return;
+    setLoadingOlder(true);
+    try {
+      const res = await messagesAPI.getByQuery(query.id, {
+        limit: 80,
+        beforeCreatedAt: nextCursor,
+      });
+      const older = res.messages || [];
+      setFetchedMessages((prev) => [...older, ...prev]);
+      setHasMoreOlder(Boolean(res.hasMore));
+      setNextCursor(res.nextCursor || null);
+    } catch (err) {
+      console.error("Older message load failed:", err);
+    } finally {
+      setLoadingOlder(false);
     }
   };
 
@@ -445,10 +448,11 @@ const ChatWindow = () => {
         {/* Messages */}
         <div className="messages-container" ref={messagesContainerRef}>
           <div className="date-divider"><span>Today</span></div>
-          {totalSessions > visibleSessionsCount && (
+          {hasMoreOlder && (
              <div style={{ textAlign: 'center', marginBottom: '10px' }}>
                 <button 
-                  onClick={() => setVisibleSessionsCount(prev => prev + 1)}
+                  onClick={loadOlderMessages}
+                  disabled={loadingOlder}
                   style={{
                     background: '#f1f5f9', border: '1px solid #cbd5e1', color: '#475569',
                     padding: '6px 12px', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold', 
@@ -457,7 +461,7 @@ const ChatWindow = () => {
                   onMouseOver={(e) => { e.target.style.background = '#e2e8f0'; }}
                   onMouseOut={(e) => { e.target.style.background = '#f1f5f9'; }}
                 >
-                  Load Old Chat
+                  {loadingOlder ? "Loading older..." : "Load Old Chat"}
                 </button>
              </div>
           )}

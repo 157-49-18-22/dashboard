@@ -16,7 +16,9 @@ const AllChat = () => {
   const [selectedQuery, setSelectedQuery] = useState(null);
   const [messages, setMessages] = useState([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
-  const [msgLimit, setMsgLimit] = useState(30);
+  const [hasMoreMsg, setHasMoreMsg] = useState(false);
+  const [msgCursor, setMsgCursor] = useState(null);
+  const [loadingOlder, setLoadingOlder] = useState(false);
   const [lightboxImg, setLightboxImg] = useState(null);
   
   const { currentUser, sendMessage, agents } = useApp();
@@ -79,7 +81,9 @@ const AllChat = () => {
 
   const handleSelectChat = async (q) => {
     setSelectedQuery(q);
-    setMsgLimit(30);
+    setHasMoreMsg(false);
+    setMsgCursor(null);
+    setLoadingOlder(false);
     setLoadingMessages(true);
     setMessages([]);
     setReplyingTo(null);
@@ -87,6 +91,8 @@ const AllChat = () => {
       const res = await messagesAPI.getByQuery(q.id, { limit: 80 });
       if (res && res.messages) {
         setMessages(res.messages);
+        setHasMoreMsg(Boolean(res.hasMore));
+        setMsgCursor(res.nextCursor || null);
       }
     } catch (error) {
       console.error("Error loading msgs", error);
@@ -134,12 +140,26 @@ const AllChat = () => {
     };
   }, [selectedQuery?.id]);
 
-  const handleLoadMoreMsgs = () => {
-    setMsgLimit(prev => prev + 30);
+  const handleLoadMoreMsgs = async () => {
+    if (!selectedQuery?.id || !hasMoreMsg || !msgCursor || loadingOlder) return;
+    setLoadingOlder(true);
+    try {
+      const res = await messagesAPI.getByQuery(selectedQuery.id, {
+        limit: 80,
+        beforeCreatedAt: msgCursor,
+      });
+      const older = res.messages || [];
+      setMessages((prev) => [...older, ...prev]);
+      setHasMoreMsg(Boolean(res.hasMore));
+      setMsgCursor(res.nextCursor || null);
+    } catch (err) {
+      console.error("Load older failed:", err);
+    } finally {
+      setLoadingOlder(false);
+    }
   };
-
-  const displayMsgs = messages.slice(Math.max(messages.length - msgLimit, 0));
-  const showMsgLoadMore = messages.length > msgLimit;
+  const displayMsgs = messages;
+  const showMsgLoadMore = hasMoreMsg;
 
   const getStatusBadge = (status) => {
     if (status === 'resolved') return <span className="stat-badge resolved"><CheckCircle2 size={12}/> Resolved</span>
@@ -379,8 +399,8 @@ const AllChat = () => {
               ) : (
                 <>
                   {showMsgLoadMore && (
-                    <button className="ac-load-more-msgs" onClick={handleLoadMoreMsgs}>
-                      Load older messages (30+)
+                    <button className="ac-load-more-msgs" onClick={handleLoadMoreMsgs} disabled={loadingOlder}>
+                      {loadingOlder ? "Loading older..." : "Load older messages"}
                     </button>
                   )}
                   {displayMsgs.map((msg) => {
