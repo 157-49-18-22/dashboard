@@ -212,7 +212,7 @@ const QueryPool = () => {
                             {query.status === "open" ? (
                               <><UserPlus size={14} /> Accept</>
                             ) : (
-                              <><CheckCircle2 size={14} /> Mark as Done</>
+                              <><MessageSquare size={14} /> Processing</>
                             )}
                           </button>
                         )}
