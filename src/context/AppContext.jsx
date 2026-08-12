@@ -288,11 +288,13 @@ export const AppProvider = ({ children }) => {
     // Query assigned
     socket.on("query:assigned", ({ queryId, agentId, acceptedAt }) => {
       setQueries((prev) =>
-        prev.map((q) =>
-          q.id === queryId 
-            ? { ...q, assignedTo: agentId, status: "in_progress", acceptedAt: acceptedAt || new Date().toISOString() } 
-            : q
-        )
+        prev.map((q) => {
+          if (q.id !== queryId) return q;
+          // If acceptedAt is present, it means the agent actively accepted it → in_progress
+          // If not (e.g. forwarded task), keep existing status (open) so it appears in Team Member Pool
+          const newStatus = acceptedAt ? "in_progress" : (q.status || "open");
+          return { ...q, assignedTo: agentId, status: newStatus, ...(acceptedAt ? { acceptedAt } : {}) };
+        })
       );
     });
 
