@@ -321,7 +321,7 @@ const AllChat = () => {
             />
           </div>
           <div className="ac-filters" style={{ display: 'flex', gap: '8px', marginTop: '12px', overflowX: 'auto' }}>
-            {['all', 'open', 'in_progress'].map(f => (
+            {['all', 'open', 'in_progress', 'resolved'].map(f => (
               <button 
                 key={f}
                 style={{
