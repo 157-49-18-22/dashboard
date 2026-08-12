@@ -341,8 +341,10 @@ const AllChat = () => {
 
           <div className="ac-list">
             {queries
-              .filter(q => !q.name || !q.name.startsWith('Mapping:'))
-              .filter((q, index, self) => index === self.findIndex(t => t.from === q.from))
+              .filter((q, index, self) => {
+                if (q.name?.startsWith('Mapping:')) return true;
+                return index === self.findIndex(t => t.from === q.from && !t.name?.startsWith('Mapping:'));
+              })
               .map((q) => (
                 <div
                   key={q.id}
