@@ -354,45 +354,6 @@ const ChatWindow = () => {
     setShowPriorityMenu(false);
   };
 
-  const [timeLeft, setTimeLeft] = useState("");
-
-  useEffect(() => {
-    if (query?.status !== "in_progress" || !query?.acceptedAt) {
-      setTimeLeft("");
-      return;
-    }
-
-    const calculateTimeLeft = () => {
-      const acceptedTime = new Date(query.acceptedAt).getTime();
-      // Default is 30 minutes. (For testing, if you change backend timeout in .env to 1 min, you can change 30 to 1 here!)
-      const timeoutMinutes = 30; 
-      const timeoutMs = timeoutMinutes * 60 * 1000; 
-      const expiryTime = acceptedTime + timeoutMs;
-      const now = Date.now();
-      const diff = expiryTime - now;
-
-      if (diff <= 0) {
-        return "00:00";
-      }
-
-      const minutes = Math.floor(diff / 60000);
-      const seconds = Math.floor((diff % 60000) / 1000);
-      return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    };
-
-    // Set initial
-    setTimeLeft(calculateTimeLeft());
-
-    const timer = setInterval(() => {
-      const remaining = calculateTimeLeft();
-      setTimeLeft(remaining);
-      if (remaining === "00:00") {
-        clearInterval(timer);
-      }
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [query?.acceptedAt, query?.status]);
 
   if (!query) {
     return (
@@ -439,28 +400,7 @@ const ChatWindow = () => {
           <span className={`status-chip ${query.status}`}>
             {query.status === "open" ? "Open" : query.status === "in_progress" ? "In Progress" : "Resolved"}
           </span>
-          {query.status === "in_progress" && timeLeft && (
-            <span 
-              className="timer-badge animate-pulse" 
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                background: '#fef2f2',
-                color: '#ef4444',
-                border: '1px solid #fee2e2',
-                padding: '4px 10px',
-                borderRadius: '16px',
-                fontSize: '11px',
-                fontWeight: '700',
-                marginLeft: '8px',
-                letterSpacing: '0.5px',
-                boxShadow: '0 1px 2px rgba(239, 68, 68, 0.05)'
-              }}
-            >
-              ⏳ SLA: {timeLeft}
-            </span>
-          )}
+
           <button className="icon-btn" title="Internal Notes" onClick={() => setShowNotes(!showNotes)}>
             <StickyNote size={16} />
           </button>
