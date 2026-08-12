@@ -207,9 +207,15 @@ const QueryPool = () => {
                              ))}
                            </select>
                         )}
-                        <button className="claim-btn-horizontal" onClick={() => handleAccept(query)}>
-                          {query.status === "open" ? <><UserPlus size={14} /> Accept</> : <><MessageSquare size={14} /> Open Task</>}
-                        </button>
+                        {query.status !== "resolved" && (
+                          <button className="claim-btn-horizontal" onClick={() => handleAccept(query)}>
+                            {query.status === "open" ? (
+                              <><UserPlus size={14} /> Accept</>
+                            ) : (
+                              <><MessageSquare size={14} /> {query.name?.startsWith('Mapping:') ? "Mark as Done" : "Open Task"}</>
+                            )}
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
