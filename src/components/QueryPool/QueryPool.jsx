@@ -212,7 +212,7 @@ const QueryPool = () => {
                             {query.status === "open" ? (
                               <><UserPlus size={14} /> Accept</>
                             ) : (
-                              <><MessageSquare size={14} /> {query.name?.startsWith('Mapping:') ? "Mark as Done" : "Open Task"}</>
+                              <><CheckCircle2 size={14} /> Mark as Done</>
                             )}
                           </button>
                         )}
