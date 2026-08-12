@@ -1,4 +1,4 @@
-.chat-window {
+﻿.chat-window {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -977,3 +977,14 @@
 .pd-medium { color: #ca8a04; }
 .pd-high   { color: #ea580c; }
 .pd-urgent { color: #dc2626; }
+.message-actions-container { position: absolute; top: 50%; transform: translateY(-50%); display: flex; flex-direction: row; gap: 6px; opacity: 0.5; transition: opacity 0.15s; z-index: 2; }
+.message-wrap:hover .message-actions-container { opacity: 1; }
+.customer-msg .message-actions-container { right: -65px; flex-direction: row-reverse; }
+.agent-msg .message-actions-container { left: -65px; }
+.action-icon-btn { width: 26px; height: 26px; border: 1px solid #e2e8f0; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #64748b; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.08); transition: all 0.15s; }
+.action-icon-btn:hover { background: #f0fdf4; color: #128c7e; border-color: #bbf7d0; }
+
+
+/* Support for AllChat.jsx classes */
+.msg-bubble:hover .message-actions-container { opacity: 1; }
+.user-msg .message-actions-container { right: -65px; flex-direction: row-reverse; }

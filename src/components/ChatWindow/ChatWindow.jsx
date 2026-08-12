@@ -480,21 +480,19 @@ const ChatWindow = () => {
               className={`message-wrap ${msg.sender === "agent" ? "agent-msg" : "customer-msg"}`}
             >
               {canReply && (
-                <>
+                <div className="message-actions-container">
                   <button
                     type="button"
-                    className="message-reply-btn"
+                    className="action-icon-btn"
                     title="Reply"
-                    style={{ [msg.sender === "agent" ? 'left' : 'right']: '-36px' }}
                     onClick={() => setReplyingTo(msg)}
                   >
                     <Reply size={14} />
                   </button>
                   <button
                     type="button"
-                    className="message-reply-btn"
+                    className="action-icon-btn"
                     title="Forward to Agent for Mapping"
-                    style={{ [msg.sender === "agent" ? 'left' : 'right']: '-70px' }}
                     onClick={() => {
                       const textToForward = msg.messageType === 'image' || msg.messageType === 'document' ? msg.text : formatMessageDisplay(msg.text);
                       const encodedText = encodeURIComponent(`*Mapping Task:*\n\n${textToForward}`);
@@ -503,7 +501,7 @@ const ChatWindow = () => {
                   >
                     <Forward size={14} />
                   </button>
-                </>
+                </div>
               )}
               {msg.sender === "agent" && <div className="agent-tag">{msg.agentName || currentUser?.name}</div>}
               <div className={`message-bubble ${msg.sender}`}>

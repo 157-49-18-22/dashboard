@@ -414,32 +414,19 @@ const AllChat = () => {
                     return (
                       <div key={msg.id} id={`ac-msg-${msg.id}`} className={`msg-bubble ${isAgent ? 'agent-msg' : 'user-msg'}`} style={{ position: 'relative' }}>
                         {isAdmin && (
-                          <div
-                            className="message-actions-container"
-                            style={{ 
-                              position: 'absolute', 
-                              top: '50%', 
-                              transform: 'translateY(-50%)', 
-                              [isAgent ? 'left' : 'right']: '-60px', 
-                              display: 'flex', 
-                              gap: '8px', 
-                              opacity: 0.7 
-                            }}
-                          >
+                          <div className="message-actions-container">
                             <button
                               type="button"
-                              className="message-reply-btn"
+                              className="action-icon-btn"
                               title="Reply"
-                              style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
                               onClick={() => setReplyingTo(msg)}
                             >
                               <Reply size={14} />
                             </button>
                             <button
                               type="button"
-                              className="message-forward-btn"
+                              className="action-icon-btn"
                               title="Forward to Agent for Mapping"
-                              style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
                               onClick={() => {
                                 const textToForward = msg.messageType === 'image' || msg.messageType === 'document' ? msg.text : formatMessageDisplay(msg.text);
                                 const encodedText = encodeURIComponent(`*Mapping Task:*\n\n${textToForward}`);
