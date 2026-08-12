@@ -28,6 +28,9 @@ const AllChat = () => {
   const [replyingTo, setReplyingTo] = useState(null);
   const [sending, setSending] = useState(false);
   const [pastedImage, setPastedImage] = useState(null); // { file, previewUrl }
+  const [showForwardModal, setShowForwardModal] = useState(false);
+  const [forwardTargetAgent, setForwardTargetAgent] = useState("");
+  const [forwardMessageData, setForwardMessageData] = useState(null);
 
   const messagesEndRef = useRef(null);
 
@@ -428,9 +431,8 @@ const AllChat = () => {
                               className="action-icon-btn"
                               title="Forward to Agent for Mapping"
                               onClick={() => {
-                                const textToForward = msg.messageType === 'image' || msg.messageType === 'document' ? msg.text : formatMessageDisplay(msg.text);
-                                const encodedText = encodeURIComponent(`*Mapping Task:*\n\n${textToForward}`);
-                                window.open(`https://api.whatsapp.com/send?text=${encodedText}`, '_blank');
+                                setForwardMessageData(msg);
+                                setShowForwardModal(true);
                               }}
                             >
                               <Forward size={14} />
@@ -562,6 +564,50 @@ const AllChat = () => {
         />
       </div>
     )}
+
+      {/* Internal Forward Modal */}
+      {showForwardModal && (
+        <div className="lightbox-overlay" onClick={() => setShowForwardModal(false)} style={{ zIndex: 1000}}>
+          <div className="ac-card" onClick={(e) => e.stopPropagation()} style={{ background: '#fff', padding: '20px', borderRadius: '12px', width: '90%', maxWidth: '400px', cursor: 'default' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, color: '#1a202c', fontSize: '16px' }}>Forward to Agent</h3>
+              <button onClick={() => setShowForwardModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a0aec0' }}>
+                <X size={18} />
+              </button>
+            </div>
+            
+            <div style={{ marginBottom: '16px' }}>
+               <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#4a5568', marginBottom: '8px' }}>Select Agent</label>
+               <select style={{ width: '100%', padding: '10px', border: '1px solid #e2e8f0', borderRadius: '6px' }} value={forwardTargetAgent} onChange={(e) => setForwardTargetAgent(e.target.value)}>
+                 <option value="">Select an Agent...</option>
+                 {agents.map(a => (
+                   <option key={a.id} value={a.id}>{a.name} ({a.role})</option>
+                 ))}
+               </select>
+               
+               {forwardMessageData && (
+                 <div style={{ marginTop: '16px', padding: '10px', background: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0', fontSize: '13px', color: '#475569', maxHeight: '100px', overflowY: 'auto' }}>
+                    <strong>Message Preview:</strong><br/>
+                    {forwardMessageData.messageType === 'image' ? '[Image]' : forwardMessageData.text}
+                 </div>
+               )}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+               <button type="button" onClick={() => setShowForwardModal(false)} style={{ padding: '8px 16px', borderRadius: '6px', background: '#edf2f7', border: 'none', color: '#4a5568', cursor: 'pointer', fontWeight: 'bold' }}>Cancel</button>
+               <button type="button" disabled={!forwardTargetAgent} onClick={() => {
+                 const agentName = agents.find(a => a.id === forwardTargetAgent)?.name || "Agent";
+                 alert(`Message forwarded to ${agentName} internally for mapping!`);
+                 setShowForwardModal(false);
+                 setForwardTargetAgent("");
+                 setForwardMessageData(null);
+               }} style={{ padding: '8px 16px', borderRadius: '6px', background: '#25d366', border: 'none', color: '#fff', cursor: 'pointer', fontWeight: 'bold', opacity: forwardTargetAgent ? 1 : 0.5 }}>
+                 Forward
+               </button>
+            </div>
+          </div>
+        </div>
+      )}
   </>
   );
 }

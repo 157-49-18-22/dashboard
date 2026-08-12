@@ -41,6 +41,10 @@ const ChatWindow = () => {
   const [nextCursor, setNextCursor] = useState(null);
   const [loadingOlder, setLoadingOlder] = useState(false);
 
+  const [showForwardModal, setShowForwardModal] = useState(false);
+  const [forwardTargetAgent, setForwardTargetAgent] = useState("");
+  const [forwardMessageData, setForwardMessageData] = useState(null);
+
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -281,6 +285,22 @@ const ChatWindow = () => {
     setNote("");
   };
 
+  const handleInternalForward = () => {
+    if (!forwardTargetAgent || !forwardMessageData) return;
+    const textToForward = forwardMessageData.messageType === 'image' || forwardMessageData.messageType === 'document' ? forwardMessageData.text : formatMessageDisplay(forwardMessageData.text);
+    const agentName = agents.find(a => a.id === forwardTargetAgent)?.name || "Agent";
+    setNotes(prev => [...prev, { 
+      text: `Forwarded to @${agentName} for Mapping:\n${textToForward}`, 
+      time: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }), 
+      agent: currentUser.name 
+    }]);
+    alert(`Message forwarded to ${agentName} successfully!`);
+    setShowForwardModal(false);
+    setForwardTargetAgent("");
+    setForwardMessageData(null);
+    setShowNotes(true);
+  };
+
   const handleAcceptQuery = (queryId) => {
     assignQuery(queryId);
     setActiveTab("queries");
@@ -494,9 +514,8 @@ const ChatWindow = () => {
                     className="action-icon-btn"
                     title="Forward to Agent for Mapping"
                     onClick={() => {
-                      const textToForward = msg.messageType === 'image' || msg.messageType === 'document' ? msg.text : formatMessageDisplay(msg.text);
-                      const encodedText = encodeURIComponent(`*Mapping Task:*\n\n${textToForward}`);
-                      window.open(`https://api.whatsapp.com/send?text=${encodedText}`, '_blank');
+                      setForwardMessageData(msg);
+                      setShowForwardModal(true);
                     }}
                   >
                     <Forward size={14} />
@@ -725,6 +744,48 @@ const ChatWindow = () => {
                   setShowTransferModal(false);
                }}>
                  Transfer Query
+               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Internal Forward Modal */}
+      {showForwardModal && (
+        <div className="agent-modal-overlay" onClick={() => setShowForwardModal(false)} style={{ zIndex: 1000}}>
+          <div className="agent-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="agent-modal-header">
+              <div>
+                <h3>Forward to Agent</h3>
+                <p>Send this message internally to an agent for mapping</p>
+              </div>
+              <button className="agent-modal-close" onClick={() => setShowForwardModal(false)}>
+                <X size={16} />
+              </button>
+            </div>
+            
+            <div className="agent-modal-body">
+               <div className="agent-form-group">
+                 <label>Select Agent</label>
+                 <select className="agent-switcher" style={{ width: '100%', padding: '10px', marginTop: '4px', border: '1px solid #e2e8f0', borderRadius: '6px' }} value={forwardTargetAgent} onChange={(e) => setForwardTargetAgent(e.target.value)}>
+                   <option value="">Select an Agent...</option>
+                   {agents.map(a => (
+                     <option key={a.id} value={a.id}>{a.name} ({a.role})</option>
+                   ))}
+                 </select>
+               </div>
+               {forwardMessageData && (
+                 <div style={{ marginTop: '16px', padding: '10px', background: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0', fontSize: '13px', color: '#475569', maxHeight: '100px', overflowY: 'auto' }}>
+                    <strong>Message Preview:</strong><br/>
+                    {forwardMessageData.messageType === 'image' ? '[Image]' : forwardMessageData.text}
+                 </div>
+               )}
+            </div>
+
+            <div className="agent-modal-footer">
+               <button type="button" className="agent-btn-cancel" onClick={() => setShowForwardModal(false)}>Cancel</button>
+               <button type="button" className="agent-btn-submit" disabled={!forwardTargetAgent} onClick={handleInternalForward}>
+                 Forward
                </button>
             </div>
           </div>
