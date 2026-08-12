@@ -594,32 +594,47 @@ const AllChat = () => {
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
                <button type="button" onClick={() => setShowForwardModal(false)} style={{ padding: '8px 16px', borderRadius: '6px', background: '#edf2f7', border: 'none', color: '#4a5568', cursor: 'pointer', fontWeight: 'bold' }}>Cancel</button>
-               <button type="button" disabled={!forwardTargetAgent} onClick={() => {
+               <button type="button" disabled={!forwardTargetAgent} onClick={async () => {
                  const agentName = agents.find(a => a.id === forwardTargetAgent)?.name || "Agent";
                  const textToForward = forwardMessageData.messageType === 'image' || forwardMessageData.messageType === 'document' ? forwardMessageData.text : formatMessageDisplay(forwardMessageData.text);
                  
-                 const newQuery = {
-                   id: `q_fwd_${Date.now()}`,
-                   from: `Forwarded Task`,
-                   name: `Mapping: ${selectedQuery.name}`,
-                   avatar: "MT",
-                   message: textToForward,
-                   time: new Date().toISOString(),
-                   status: "open",
-                   assignedTo: forwardTargetAgent,
-                   assignedToGroup: null,
-                   unread: 1,
-                   priority: "high",
-                   messages: [{ 
-                     id: Date.now(), 
-                     sender: "customer",
-                     text: textToForward, 
-                     messageType: forwardMessageData.messageType,
-                     time: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) 
-                   }],
-                 };
-
-                 setQueries(prev => [newQuery, ...prev]);
+                 try {
+                   const created = await queriesAPI.create({
+                     name: `Mapping: ${selectedQuery?.name || 'Customer'}`,
+                     from: selectedQuery?.from || 'forwarded',
+                     message: textToForward,
+                     status: 'open',
+                     assignedTo: forwardTargetAgent,
+                     priority: 'high',
+                     isForwarded: true,
+                   });
+                   if (created && created.query) {
+                     setQueries(prev => [created.query, ...prev]);
+                   }
+                 } catch (err) {
+                   // Backend failed — still add locally so it works in offline mode
+                   const newQuery = {
+                     id: `q_fwd_${Date.now()}`,
+                     from: selectedQuery?.from || 'forwarded',
+                     name: `Mapping: ${selectedQuery?.name || 'Customer'}`,
+                     avatar: "MT",
+                     message: textToForward,
+                     time: new Date().toISOString(),
+                     status: "open",
+                     assignedTo: forwardTargetAgent,
+                     assignedToGroup: null,
+                     unread: 1,
+                     priority: "high",
+                     messages: [{ 
+                       id: Date.now(), 
+                       sender: "customer",
+                       text: textToForward, 
+                       messageType: forwardMessageData.messageType,
+                       time: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) 
+                     }],
+                   };
+                   setQueries(prev => [newQuery, ...prev]);
+                 }
 
                  alert(`Message forwarded to ${agentName}'s Team Member Pool successfully!`);
                  setShowForwardModal(false);

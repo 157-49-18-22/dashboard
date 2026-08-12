@@ -285,33 +285,47 @@ const ChatWindow = () => {
     setNote("");
   };
 
-  const handleInternalForward = () => {
+  const handleInternalForward = async () => {
     if (!forwardTargetAgent || !forwardMessageData || !query) return;
     const textToForward = forwardMessageData.messageType === 'image' || forwardMessageData.messageType === 'document' ? forwardMessageData.text : formatMessageDisplay(forwardMessageData.text);
     const agentName = agents.find(a => a.id === forwardTargetAgent)?.name || "Agent";
-    
-    const newQuery = {
-      id: `q_fwd_${Date.now()}`,
-      from: `Forwarded Task`,
-      name: `Mapping: ${query.name}`,
-      avatar: "MT",
-      message: textToForward,
-      time: new Date().toISOString(),
-      status: "open",
-      assignedTo: forwardTargetAgent,
-      assignedToGroup: null,
-      unread: 1,
-      priority: "high",
-      messages: [{ 
-        id: Date.now(), 
-        sender: "customer",
-        text: textToForward, 
-        messageType: forwardMessageData.messageType,
-        time: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) 
-      }],
-    };
 
-    setQueries(prev => [newQuery, ...prev]);
+    try {
+      const created = await queriesAPI.create({
+        name: `Mapping: ${query.name}`,
+        from: query.from || 'forwarded',
+        message: textToForward,
+        status: 'open',
+        assignedTo: forwardTargetAgent,
+        priority: 'high',
+        isForwarded: true,
+      });
+      if (created && created.query) {
+        setQueries(prev => [created.query, ...prev]);
+      }
+    } catch (err) {
+      const newQuery = {
+        id: `q_fwd_${Date.now()}`,
+        from: query.from || 'forwarded',
+        name: `Mapping: ${query.name}`,
+        avatar: "MT",
+        message: textToForward,
+        time: new Date().toISOString(),
+        status: "open",
+        assignedTo: forwardTargetAgent,
+        assignedToGroup: null,
+        unread: 1,
+        priority: "high",
+        messages: [{ 
+          id: Date.now(), 
+          sender: "customer",
+          text: textToForward, 
+          messageType: forwardMessageData.messageType,
+          time: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) 
+        }],
+      };
+      setQueries(prev => [newQuery, ...prev]);
+    }
 
     alert(`Message forwarded to ${agentName}'s Team Member Pool successfully!`);
     setShowForwardModal(false);
