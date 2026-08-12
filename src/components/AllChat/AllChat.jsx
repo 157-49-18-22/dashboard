@@ -6,7 +6,9 @@ import { useApp } from "../../context/AppContext";
 import "./AllChat.css";
 import { getMessageType, getReplyPreviewText, buildReplyToPayload, formatMessageDisplay } from "../ChatWindow/messageUtils";
 const AllChat = () => {
-  const [queries, setQueries] = useState([]);
+  const { currentUser, sendMessage, agents, queries, setQueries } = useApp();
+  const isAdmin = currentUser?.role?.toLowerCase().includes("admin") || currentUser?.role?.toLowerCase().includes("senior");
+
   const [searchQuery, setSearchQuery] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [page, setPage] = useState(1);
@@ -20,9 +22,6 @@ const AllChat = () => {
   const [msgCursor, setMsgCursor] = useState(null);
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [lightboxImg, setLightboxImg] = useState(null);
-  
-  const { currentUser, sendMessage, agents } = useApp();
-  const isAdmin = currentUser?.role?.toLowerCase().includes("admin") || currentUser?.role?.toLowerCase().includes("senior");
   const [chatFilter, setChatFilter] = useState("all");
   const [replyText, setReplyText] = useState("");
   const [replyingTo, setReplyingTo] = useState(null);
@@ -597,7 +596,32 @@ const AllChat = () => {
                <button type="button" onClick={() => setShowForwardModal(false)} style={{ padding: '8px 16px', borderRadius: '6px', background: '#edf2f7', border: 'none', color: '#4a5568', cursor: 'pointer', fontWeight: 'bold' }}>Cancel</button>
                <button type="button" disabled={!forwardTargetAgent} onClick={() => {
                  const agentName = agents.find(a => a.id === forwardTargetAgent)?.name || "Agent";
-                 alert(`Message forwarded to ${agentName} internally for mapping!`);
+                 const textToForward = forwardMessageData.messageType === 'image' || forwardMessageData.messageType === 'document' ? forwardMessageData.text : formatMessageDisplay(forwardMessageData.text);
+                 
+                 const newQuery = {
+                   id: `q_fwd_${Date.now()}`,
+                   from: `Forwarded Task`,
+                   name: `Mapping: ${selectedQuery.name}`,
+                   avatar: "MT",
+                   message: textToForward,
+                   time: new Date().toISOString(),
+                   status: "open",
+                   assignedTo: forwardTargetAgent,
+                   assignedToGroup: null,
+                   unread: 1,
+                   priority: "high",
+                   messages: [{ 
+                     id: Date.now(), 
+                     sender: "customer",
+                     text: textToForward, 
+                     messageType: forwardMessageData.messageType,
+                     time: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) 
+                   }],
+                 };
+
+                 setQueries(prev => [newQuery, ...prev]);
+
+                 alert(`Message forwarded to ${agentName}'s Team Member Pool successfully!`);
                  setShowForwardModal(false);
                  setForwardTargetAgent("");
                  setForwardMessageData(null);

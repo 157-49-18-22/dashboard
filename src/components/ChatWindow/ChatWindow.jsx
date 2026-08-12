@@ -17,7 +17,7 @@ const quickReplies = [
 
 const ChatWindow = () => {
   const { 
-    selectedQuery, queries, sendMessage, resolveQuery, setSelectedQuery, 
+    selectedQuery, queries, setQueries, sendMessage, resolveQuery, setSelectedQuery, 
     currentUser, backendOnline, assignQuery, setActiveTab, agents, agentGroups, transferQuery 
   } = useApp();
   
@@ -286,19 +286,37 @@ const ChatWindow = () => {
   };
 
   const handleInternalForward = () => {
-    if (!forwardTargetAgent || !forwardMessageData) return;
+    if (!forwardTargetAgent || !forwardMessageData || !query) return;
     const textToForward = forwardMessageData.messageType === 'image' || forwardMessageData.messageType === 'document' ? forwardMessageData.text : formatMessageDisplay(forwardMessageData.text);
     const agentName = agents.find(a => a.id === forwardTargetAgent)?.name || "Agent";
-    setNotes(prev => [...prev, { 
-      text: `Forwarded to @${agentName} for Mapping:\n${textToForward}`, 
-      time: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }), 
-      agent: currentUser.name 
-    }]);
-    alert(`Message forwarded to ${agentName} successfully!`);
+    
+    const newQuery = {
+      id: `q_fwd_${Date.now()}`,
+      from: `Forwarded Task`,
+      name: `Mapping: ${query.name}`,
+      avatar: "MT",
+      message: textToForward,
+      time: new Date().toISOString(),
+      status: "open",
+      assignedTo: forwardTargetAgent,
+      assignedToGroup: null,
+      unread: 1,
+      priority: "high",
+      messages: [{ 
+        id: Date.now(), 
+        sender: "customer",
+        text: textToForward, 
+        messageType: forwardMessageData.messageType,
+        time: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) 
+      }],
+    };
+
+    setQueries(prev => [newQuery, ...prev]);
+
+    alert(`Message forwarded to ${agentName}'s Team Member Pool successfully!`);
     setShowForwardModal(false);
     setForwardTargetAgent("");
     setForwardMessageData(null);
-    setShowNotes(true);
   };
 
   const handleAcceptQuery = (queryId) => {
