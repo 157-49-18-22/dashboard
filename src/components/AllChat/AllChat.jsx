@@ -166,10 +166,11 @@ const AllChat = () => {
   const displayMsgs = messages;
   const showMsgLoadMore = hasMoreMsg;
 
-  const getStatusBadge = (status) => {
-    if (status === 'resolved') return <span className="stat-badge resolved"><CheckCircle2 size={12}/> Resolved</span>
-    if (status === 'in_progress') return <span className="stat-badge in_progress"><Clock size={12}/> In Progress</span>
-    return <span className="stat-badge open">Open</span>
+  const getStatusBadge = (q) => {
+    const isMapping = q.name?.startsWith('Mapping:');
+    if (q.status === 'resolved') return <span className="stat-badge resolved"><CheckCircle2 size={12}/> {isMapping ? 'Done' : 'Resolved'}</span>
+    if (q.status === 'in_progress') return <span className="stat-badge in_progress"><Clock size={12}/> {isMapping ? 'Processing' : 'In Progress'}</span>
+    return <span className="stat-badge open">{isMapping ? 'Pending' : 'Open'}</span>
   }
 
   const renderQuotedBlock = (msg) => {
@@ -359,7 +360,7 @@ const AllChat = () => {
               </div>
               <div className="ac-card-mid">
                 <span className="pn">{q.from}</span>
-                {getStatusBadge(q.status)}
+                {getStatusBadge(q)}
               </div>
               <p className="last-msg">{q.message}</p>
             </div>

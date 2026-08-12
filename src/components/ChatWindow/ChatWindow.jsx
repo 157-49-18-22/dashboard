@@ -398,7 +398,7 @@ const ChatWindow = () => {
         </div>
         <div className="chat-header-actions">
           <span className={`status-chip ${query.status}`}>
-            {query.status === "open" ? "Open" : query.status === "in_progress" ? "In Progress" : "Resolved"}
+            {query.status === "open" ? (query.name?.startsWith('Mapping:') ? "Pending" : "Open") : query.status === "in_progress" ? (query.name?.startsWith('Mapping:') ? "Processing" : "In Progress") : (query.name?.startsWith('Mapping:') ? "Done" : "Resolved")}
           </span>
 
           <button className="icon-btn" title="Internal Notes" onClick={() => setShowNotes(!showNotes)}>
@@ -429,7 +429,7 @@ const ChatWindow = () => {
                  <Forward size={14} style={{ marginRight: '4px' }} /> Assign to Other
               </button>
               <button className="resolve-btn" onClick={() => resolveQuery(query.id)}>
-                <CheckCircle size={15} /> Resolve
+                <CheckCircle size={15} /> {query.name?.startsWith('Mapping:') ? "Mark as Done" : "Resolve"}
               </button>
             </>
           )}
