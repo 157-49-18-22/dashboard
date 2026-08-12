@@ -35,15 +35,14 @@ const QueryPool = () => {
   // Filter and sort: newest message first (contact book saved or not — same rule)
   const poolQueries = queries
     .filter((q) => {
-      if (q.status === "resolved") return false;
-      
       if (activeTab === "pool") {
+        if (q.status === "resolved") return false;
         return !q.assignedTo && !q.assignedToGroup;
       } else if (activeTab === "department") {
-        // Only show queries assigned to the exact group the current user is in
+        if (q.status === "resolved") return false;
         return !q.assignedTo && q.assignedToGroup && q.assignedToGroup === currentUser?.groupId;
       } else if (activeTab === "specific") {
-        return q.assignedTo === currentUser?.id && q.status === "open";
+        return q.assignedTo === currentUser?.id;
       }
       return false;
     })
@@ -55,7 +54,9 @@ const QueryPool = () => {
     .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
 
   const handleAccept = (query) => {
-    assignQuery(query.id);
+    if (query.status === "open") {
+      assignQuery(query.id);
+    }
     setSelectedQuery(query);
     setActiveTab("queries");
   };
@@ -179,10 +180,17 @@ const QueryPool = () => {
                       )}
                     </td>
                     <td>
-                      <span className="priority-badge" style={{ background: pc.bg, color: pc.color }}>
+                      <span className="priority-badge" style={{ background: pc.bg, color: pc.color, marginBottom: '4px', display: 'inline-flex' }}>
                         <span className="priority-dot" style={{ background: pc.color }}></span>
                         {pc.label} Priority
                       </span>
+                      {activeTab === 'specific' && query.name?.startsWith('Mapping:') && (
+                        <div style={{ marginTop: '4px' }}>
+                          <span className={`stat-badge ${query.status}`} style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '4px', background: query.status === 'resolved' ? '#dcfce7' : query.status === 'in_progress' ? '#e0e7ff' : '#f1f5f9', color: query.status === 'resolved' ? '#166534' : query.status === 'in_progress' ? '#3730a3' : '#475569', display: 'inline-block' }}>
+                            {query.status === "open" ? "Pending" : query.status === "in_progress" ? "Processing" : "Done"}
+                          </span>
+                        </div>
+                      )}
                     </td>
                     <td className="text-right">
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px' }}>
@@ -200,7 +208,7 @@ const QueryPool = () => {
                            </select>
                         )}
                         <button className="claim-btn-horizontal" onClick={() => handleAccept(query)}>
-                          <UserPlus size={14} /> Accept
+                          {query.status === "open" ? <><UserPlus size={14} /> Accept</> : <><MessageSquare size={14} /> Open Task</>}
                         </button>
                       </div>
                     </td>

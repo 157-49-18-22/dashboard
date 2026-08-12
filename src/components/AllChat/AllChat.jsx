@@ -340,12 +340,10 @@ const AllChat = () => {
         </div>
         
         <div className="ac-list">
-          {queries.filter((q, index, self) => 
-            // 1. Hide forwarded internal tasks
-            (!q.name || !q.name.startsWith('Mapping:')) && 
-            // 2. Keep only the most recent query per phone number
-            index === self.findIndex(t => t.from === q.from)
-          ).map((q) => (
+          {queries
+            .filter(q => !q.name || !q.name.startsWith('Mapping:'))
+            .filter((q, index, self) => index === self.findIndex(t => t.from === q.from))
+            .map((q) => (
             <div 
               key={q.id} 
               className={`ac-card ${selectedQuery?.id === q.id ? 'active' : ''}`}
