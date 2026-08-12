@@ -4,7 +4,7 @@ import { getSocket } from "../../services/socket";
 import { Search, Loader2, MessageSquare, User, CheckCircle2, Clock, X, ZoomIn, Send, Reply } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import "./AllChat.css";
-import { getMessageType, getReplyPreviewText, buildReplyToPayload } from "../ChatWindow/messageUtils";
+import { getMessageType, getReplyPreviewText, buildReplyToPayload, formatMessageDisplay } from "../ChatWindow/messageUtils";
 const AllChat = () => {
   const [queries, setQueries] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -448,7 +448,7 @@ const AllChat = () => {
                               📄 View Document
                             </a>
                           ) : (
-                            <span>{msg.text}</span>
+                            <span>{formatMessageDisplay(msg.text)}</span>
                           )}
                         </div>
                         <span className="msg-time">{msg.time}</span>

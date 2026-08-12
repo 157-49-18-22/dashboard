@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useApp } from "../../context/AppContext";
 import { Inbox, UserPlus, Clock, Sparkles, AlertTriangle, MessageSquare, ChevronDown, ChevronUp, Users } from "lucide-react";
+import { formatMessageDisplay } from "../ChatWindow/messageUtils";
 import "./QueryPool.css";
 
 const priorityConfig = {
@@ -148,7 +149,7 @@ const QueryPool = () => {
                                     return (
                                       <div key={msg.id || index} className={`mini-bubble-wrap ${isCustomer ? "customer" : "agent"}`}>
                                         <div className="mini-bubble">
-                                          <p>{msg.text}</p>
+                                          <p>{formatMessageDisplay(msg.text)}</p>
                                           <span className="mini-time">{msg.time || "Just now"}</span>
                                         </div>
                                       </div>

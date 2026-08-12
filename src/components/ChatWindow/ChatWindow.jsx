@@ -4,7 +4,7 @@ import {
   ArrowLeft, CheckCircle, AlertCircle, Send, Smile, Phone, Tag, StickyNote, Search, Loader, User, Paperclip, FileText, Download, Reply, X, Forward
 } from "lucide-react";
 import { messagesAPI, queriesAPI } from "../../services/api";
-import { getMessageType, getReplyPreviewText, buildReplyToPayload } from "./messageUtils";
+import { getMessageType, getReplyPreviewText, buildReplyToPayload, formatMessageDisplay } from "./messageUtils";
 import "./ChatWindow.css";
 
 const quickReplies = [
@@ -503,7 +503,7 @@ const ChatWindow = () => {
                     <Download size={14} />
                   </a>
                 ) : (
-                  <p>{msg.text}</p>
+                  <p className="message-text">{formatMessageDisplay(msg.text)}</p>
                 )}
                 <span className="msg-time">{formatMessageTime(msg)}{msg.sender === "agent" && <span className="msg-ticks"> ✓✓</span>}</span>
               </div>

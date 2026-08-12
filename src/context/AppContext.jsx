@@ -166,7 +166,7 @@ export const AppProvider = ({ children }) => {
         if (token) {
           // Fetch real data from backend
           const [qRes, aRes, logRes, gpRes] = await Promise.all([
-            queriesAPI.getAll({ limit: 50 }),
+            queriesAPI.getAll({ limit: 200 }),
             agentsAPI.getAll(),
             activityAPI.getAll({ limit: 50 }),
             groupsAPI.getAll().catch(() => ({ data: [] })),
@@ -247,8 +247,19 @@ export const AppProvider = ({ children }) => {
           
           return { 
             ...q,
-            ...(query && query.priority ? { priority: query.priority } : {}),
-            ...(query && query.name ? { name: query.name } : {}),
+            ...(query ? {
+              priority: query.priority ?? q.priority,
+              name: query.name ?? q.name,
+              assignedTo: query.assignedTo ?? null,
+              assignedToGroup: query.assignedToGroup ?? null,
+              status: query.status ?? "open",
+              acceptedAt: query.acceptedAt ?? null,
+            } : {
+              assignedTo: null,
+              assignedToGroup: null,
+              status: "open",
+              acceptedAt: null,
+            }),
             unread: (q.unread || 0) + 1, 
             message: msgText,
             time: typeof message === 'object' && message?.createdAt ? message.createdAt : new Date().toISOString(),
@@ -266,6 +277,17 @@ export const AppProvider = ({ children }) => {
         }
       }
       setTimeout(() => setNewMessageAlert(false), 3000);
+    });
+
+    // Query returned to shared pool (customer messaged again)
+    socket.on("query:returnedToPool", ({ queryId }) => {
+      setQueries((prev) =>
+        prev.map((q) =>
+          q.id === queryId
+            ? { ...q, assignedTo: null, assignedToGroup: null, status: "open", acceptedAt: null }
+            : q
+        )
+      );
     });
 
     // Query assigned
