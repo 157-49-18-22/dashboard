@@ -6,8 +6,11 @@ import { useApp } from "../../context/AppContext";
 import "./AllChat.css";
 import { getMessageType, getReplyPreviewText, buildReplyToPayload, formatMessageDisplay } from "../ChatWindow/messageUtils";
 const AllChat = () => {
-  const { currentUser, sendMessage, agents, queries, setQueries } = useApp();
+  const { currentUser, sendMessage, agents, setQueries: setGlobalQueries } = useApp();
   const isAdmin = currentUser?.role?.toLowerCase().includes("admin") || currentUser?.role?.toLowerCase().includes("senior");
+
+  // AllChat has its OWN local queries state (separate from global QueryPool)
+  const [queries, setQueries] = useState([]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [searchInput, setSearchInput] = useState("");
@@ -609,7 +612,7 @@ const AllChat = () => {
                      isForwarded: true,
                    });
                    if (created && created.query) {
-                     setQueries(prev => [created.query, ...prev]);
+                     setGlobalQueries(prev => [created.query, ...prev]);
                    }
                  } catch (err) {
                    // Backend failed — still add locally so it works in offline mode
@@ -633,7 +636,7 @@ const AllChat = () => {
                        time: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) 
                      }],
                    };
-                   setQueries(prev => [newQuery, ...prev]);
+                   setGlobalQueries(prev => [newQuery, ...prev]);
                  }
 
                  alert(`Message forwarded to ${agentName}'s Team Member Pool successfully!`);
