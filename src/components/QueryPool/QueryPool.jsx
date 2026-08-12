@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useApp } from "../../context/AppContext";
-import { Inbox, UserPlus, Clock, Sparkles, AlertTriangle, MessageSquare, ChevronDown, ChevronUp, Users } from "lucide-react";
+import { Inbox, UserPlus, Clock, Sparkles, AlertTriangle, MessageSquare, ChevronDown, ChevronUp, Users, CheckCircle2 } from "lucide-react";
 import { formatMessageDisplay } from "../ChatWindow/messageUtils";
 import "./QueryPool.css";
 
