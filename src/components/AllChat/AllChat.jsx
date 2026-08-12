@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { queriesAPI, messagesAPI } from "../../services/api";
 import { getSocket } from "../../services/socket";
-import { Search, Loader2, MessageSquare, User, CheckCircle2, Clock, X, ZoomIn, Send, Reply, Forward } from "lucide-react";
+import { Search, Loader2, MessageSquare, User, CheckCircle2, Clock, X, ZoomIn, Send, Reply, Forward, Download } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import "./AllChat.css";
 import { getMessageType, getReplyPreviewText, buildReplyToPayload, formatMessageDisplay } from "../ChatWindow/messageUtils";
@@ -555,9 +555,37 @@ const AllChat = () => {
     {/* Lightbox Modal */}
     {lightboxImg && (
       <div className="lightbox-overlay" onClick={() => setLightboxImg(null)}>
-        <button className="lightbox-close" onClick={() => setLightboxImg(null)}>
-          <X size={24} />
-        </button>
+        <div className="lightbox-toolbar" onClick={(e) => e.stopPropagation()}>
+          <a
+            href={lightboxImg}
+            download
+            target="_blank"
+            rel="noreferrer"
+            className="lightbox-download-btn"
+            title="Download Image"
+            onClick={async (e) => {
+              e.preventDefault();
+              try {
+                const res = await fetch(lightboxImg);
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `image_${Date.now()}.jpg`;
+                a.click();
+                URL.revokeObjectURL(url);
+              } catch {
+                window.open(lightboxImg, '_blank');
+              }
+            }}
+          >
+            <Download size={20} />
+            Download
+          </a>
+          <button className="lightbox-close" onClick={() => setLightboxImg(null)}>
+            <X size={24} />
+          </button>
+        </div>
         <img
           src={lightboxImg}
           alt="Full view"
