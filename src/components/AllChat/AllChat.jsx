@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { queriesAPI, messagesAPI } from "../../services/api";
 import { getSocket } from "../../services/socket";
-import { Search, Loader2, MessageSquare, User, CheckCircle2, Clock, X, ZoomIn, Send, Reply } from "lucide-react";
+import { Search, Loader2, MessageSquare, User, CheckCircle2, Clock, X, ZoomIn, Send, Reply, Forward } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import "./AllChat.css";
 import { getMessageType, getReplyPreviewText, buildReplyToPayload, formatMessageDisplay } from "../ChatWindow/messageUtils";
@@ -414,15 +414,41 @@ const AllChat = () => {
                     return (
                       <div key={msg.id} id={`ac-msg-${msg.id}`} className={`msg-bubble ${isAgent ? 'agent-msg' : 'user-msg'}`} style={{ position: 'relative' }}>
                         {isAdmin && (
-                          <button
-                            type="button"
-                            className="message-reply-btn"
-                            title="Reply"
-                            style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', [isAgent ? 'left' : 'right']: '-30px', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', opacity: 0.7 }}
-                            onClick={() => setReplyingTo(msg)}
+                          <div
+                            className="message-actions-container"
+                            style={{ 
+                              position: 'absolute', 
+                              top: '50%', 
+                              transform: 'translateY(-50%)', 
+                              [isAgent ? 'left' : 'right']: '-60px', 
+                              display: 'flex', 
+                              gap: '8px', 
+                              opacity: 0.7 
+                            }}
                           >
-                            <Reply size={14} />
-                          </button>
+                            <button
+                              type="button"
+                              className="message-reply-btn"
+                              title="Reply"
+                              style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+                              onClick={() => setReplyingTo(msg)}
+                            >
+                              <Reply size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              className="message-forward-btn"
+                              title="Forward to Agent for Mapping"
+                              style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+                              onClick={() => {
+                                const textToForward = msg.messageType === 'image' || msg.messageType === 'document' ? msg.text : formatMessageDisplay(msg.text);
+                                const encodedText = encodeURIComponent(`*Mapping Task:*\n\n${textToForward}`);
+                                window.open(`https://api.whatsapp.com/send?text=${encodedText}`, '_blank');
+                              }}
+                            >
+                              <Forward size={14} />
+                            </button>
+                          </div>
                         )}
                         {isAgent && <span className="agent-tag">{msg.agentName || 'Agent'}</span>}
                         <div className="msg-box">

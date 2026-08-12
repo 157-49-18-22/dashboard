@@ -480,14 +480,30 @@ const ChatWindow = () => {
               className={`message-wrap ${msg.sender === "agent" ? "agent-msg" : "customer-msg"}`}
             >
               {canReply && (
-                <button
-                  type="button"
-                  className="message-reply-btn"
-                  title="Reply"
-                  onClick={() => setReplyingTo(msg)}
-                >
-                  <Reply size={14} />
-                </button>
+                <>
+                  <button
+                    type="button"
+                    className="message-reply-btn"
+                    title="Reply"
+                    style={{ [msg.sender === "agent" ? 'left' : 'right']: '-36px' }}
+                    onClick={() => setReplyingTo(msg)}
+                  >
+                    <Reply size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    className="message-reply-btn"
+                    title="Forward to Agent for Mapping"
+                    style={{ [msg.sender === "agent" ? 'left' : 'right']: '-70px' }}
+                    onClick={() => {
+                      const textToForward = msg.messageType === 'image' || msg.messageType === 'document' ? msg.text : formatMessageDisplay(msg.text);
+                      const encodedText = encodeURIComponent(`*Mapping Task:*\n\n${textToForward}`);
+                      window.open(`https://api.whatsapp.com/send?text=${encodedText}`, '_blank');
+                    }}
+                  >
+                    <Forward size={14} />
+                  </button>
+                </>
               )}
               {msg.sender === "agent" && <div className="agent-tag">{msg.agentName || currentUser?.name}</div>}
               <div className={`message-bubble ${msg.sender}`}>
