@@ -32,7 +32,7 @@ const QueryPool = () => {
   const canManageAgents = currentUser?.role?.toLowerCase()?.includes("admin") || 
                           currentUser?.role?.toLowerCase()?.includes("senior");
 
-  // Filter, flag, and sort unassigned queries (escalated queries at the top, sorted by oldest first)
+  // Filter and sort: newest message first (contact book saved or not — same rule)
   const poolQueries = queries
     .filter((q) => {
       if (q.status === "resolved") return false;
@@ -52,13 +52,7 @@ const QueryPool = () => {
       const isEscalated = diffMs >= 5 * 60000;
       return { ...q, isEscalated, diffMs };
     })
-    .sort((a, b) => {
-      // Escalated queries to the top
-      if (a.isEscalated && !b.isEscalated) return -1;
-      if (!a.isEscalated && b.isEscalated) return 1;
-      // Within same escalation status, sort by longest waiting time (oldest first)
-      return b.diffMs - a.diffMs;
-    });
+    .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
 
   const handleAccept = (query) => {
     assignQuery(query.id);
